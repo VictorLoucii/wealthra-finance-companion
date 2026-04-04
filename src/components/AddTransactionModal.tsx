@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -9,57 +9,72 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from "react-native";
 import { X, Plus, Minus } from "lucide-react-native";
-import { useFinanceStore } from "../store/useFinanceStore";
+import { useFinanceStore, Transaction } from "../store/useFinanceStore"; // Imported Transaction type
 import { CATEGORIES } from "../constants/categories";
 
 interface Props {
   isVisible: boolean;
   onClose: () => void;
+  editingTransaction?: Transaction | null; // Optional: for Edit Mode
 }
 
-export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
+export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: Props) => {
   const addTransaction = useFinanceStore((state) => state.addTransaction);
+  const editTransaction = useFinanceStore((state) => state.editTransaction);
 
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
   const [notes, setNotes] = useState("");
   const [type, setType] = useState<"income" | "expense">("income");
 
-  // REQ Logic: 
-  // 1. Amount must be >= 0.1
-  // 2. If category is 'General', note is MANDATORY. 
-  // 3. If category is NOT 'General', note is OPTIONAL.
+  // Sync state when editingTransaction changes or modal opens
+  useEffect(() => {
+    if (isVisible && editingTransaction) {
+      setAmount(editingTransaction.amount.toString());
+      setCategory(editingTransaction.category);
+      setNotes(editingTransaction.notes || "");
+      setType(editingTransaction.type);
+    } else if (isVisible && !editingTransaction) {
+      // Reset to defaults for "Add" mode
+      setAmount("");
+      setCategory("General");
+      setNotes("");
+      setType("income");
+    }
+  }, [isVisible, editingTransaction]);
+
   const isAmountValid = parseFloat(amount) >= 0.1;
   const isCategorySelected = category !== "General";
   const hasNote = notes.trim().length > 0;
-
   const isFormValid = isAmountValid && (isCategorySelected || hasNote);
   
-  // Hint logic: Only show if they have an amount but are stuck on 'General' without a note
   const showNoteHint = isAmountValid && !isCategorySelected && !hasNote;
 
   const handleSave = () => {
     const parsedAmount = parseFloat(amount);
-
     if (!isFormValid) return;
 
-    addTransaction({
-      amount: parsedAmount,
-      type,
-      category,
-      // Pass note if it exists, otherwise undefined for optional support
-      notes: notes.trim() || undefined, 
-      date: new Date().toISOString(),
-    });
+    if (editingTransaction) {
+      // Logic for Editing
+      editTransaction(editingTransaction.id, {
+        amount: parsedAmount,
+        type,
+        category,
+        notes: notes.trim() || undefined,
+      });
+    } else {
+      // Logic for Adding
+      addTransaction({
+        amount: parsedAmount,
+        type,
+        category,
+        notes: notes.trim() || undefined, 
+        date: new Date().toISOString(),
+      });
+    }
 
-    // Reset local state
-    setAmount("");
-    setNotes("");
-    setType("income");
-    setCategory("General");
     onClose();
   };
 
@@ -76,7 +91,9 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
       >
         <View style={styles.modalContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>New Transaction</Text>
+            <Text style={styles.title}>
+              {editingTransaction ? "Edit Transaction" : "New Transaction"}
+            </Text>
 
             <TouchableOpacity onPress={onClose}>
               <X color="#303960" size={24} />
@@ -91,7 +108,6 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
             </View>
           )}
 
-          {/* Type Toggle */}
           <View style={styles.toggleContainer}>
             <TouchableOpacity
               style={[
@@ -102,16 +118,8 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
               ]}
               onPress={() => setType("expense")}
             >
-              <Minus
-                size={16}
-                color={type === "expense" ? "white" : "#F44336"}
-              />
-              <Text
-                style={[
-                  styles.toggleText,
-                  type === "expense" && styles.activeText,
-                ]}
-              >
+              <Minus size={16} color={type === "expense" ? "white" : "#F44336"} />
+              <Text style={[styles.toggleText, type === "expense" && styles.activeText]}>
                 Expense
               </Text>
             </TouchableOpacity>
@@ -126,71 +134,39 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
               onPress={() => setType("income")}
             >
               <Plus size={16} color={type === "income" ? "white" : "#4CAF50"} />
-              <Text
-                style={[
-                  styles.toggleText,
-                  type === "income" && styles.activeText,
-                ]}
-              >
+              <Text style={[styles.toggleText, type === "income" && styles.activeText]}>
                 Income
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Amount Input */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Amount</Text>
             <TextInput
               style={styles.amountInput}
-              disableFullscreenUI={true}
               placeholder="0.00"
               keyboardType="decimal-pad"
               value={amount}
               onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
-              autoFocus={true}
+              autoFocus={!editingTransaction} // Only auto-focus on new entries
               placeholderTextColor="#CBD5E1"
             />
           </View>
 
-          {/* Category Selector */}
           <View style={styles.section}>
             <Text style={styles.label}>Category</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryList}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryList}>
               {CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
                 const isSelected = category === cat.name;
-
                 return (
                   <TouchableOpacity
                     key={cat.id}
-                    onPress={() =>
-                      setCategory((prev) =>
-                        prev === cat.name ? "General" : cat.name,
-                      )
-                    }
-                    style={[
-                      styles.categoryChip,
-                      isSelected && {
-                        backgroundColor: cat.color + "20",
-                        borderColor: cat.color,
-                      },
-                    ]}
+                    onPress={() => setCategory(cat.name)}
+                    style={[styles.categoryChip, isSelected && { backgroundColor: cat.color + "20", borderColor: cat.color }]}
                   >
-                    <Icon
-                      size={18}
-                      color={isSelected ? cat.color : "#94A3B8"}
-                      style={styles.categoryIcon}
-                    />
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        isSelected && { color: cat.color, fontWeight: "700" },
-                      ]}
-                    >
+                    <Icon size={18} color={isSelected ? cat.color : "#94A3B8"} style={styles.categoryIcon} />
+                    <Text style={[styles.categoryText, isSelected && { color: cat.color, fontWeight: "700" }]}>
                       {cat.name}
                     </Text>
                   </TouchableOpacity>
@@ -199,13 +175,9 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
             </ScrollView>
           </View>
 
-          {/* Note Input */}
           <View style={styles.section}>
-            <Text style={styles.label}>
-              Note / Description {!isCategorySelected && "(Required)"}
-            </Text>
+            <Text style={styles.label}>Note / Description {!isCategorySelected && "(Required)"}</Text>
             <TextInput
-              disableFullscreenUI={true}
               style={styles.notesInput}
               placeholder="What was this for?"
               value={notes}
@@ -215,22 +187,21 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
             />
           </View>
 
-          {/* Add to Ledger Button */}
           <TouchableOpacity
-            style={[
-              styles.saveButton,
-              !isFormValid && { backgroundColor: "#CBD5E1", elevation: 0 },
-            ]}
+            style={[styles.saveButton, !isFormValid && { backgroundColor: "#CBD5E1", elevation: 0 }]}
             onPress={handleSave}
             disabled={!isFormValid}
           >
-            <Text style={styles.saveButtonText}>Add to Ledger</Text>
+            <Text style={styles.saveButtonText}>
+              {editingTransaction ? "Save Changes" : "Add to Ledger"}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 };
+
 
 const styles = StyleSheet.create({
   overlay: {

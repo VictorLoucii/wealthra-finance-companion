@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"; // Added useMemo here
+import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -32,11 +32,14 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  // NEW: State to track which transaction is being edited
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
   const [selectedMainItem, setSelectedMainItem] = useState("Budget");
   const [selectedBudgetItem, setSelectedBudgetItem] =
     useState("Expense Tracker");
 
-  // 1. Calculate Monthly Expenses (Logic belongs here)
+  // Calculate Monthly Expenses
   const monthlyExpenses = useMemo(() => {
     const now = new Date();
     return transactions
@@ -50,6 +53,17 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
       })
       .reduce((sum, t) => sum + t.amount, 0);
   }, [transactions]);
+
+  // NEW: Handlers for edit flow
+  const handleOpenEdit = (item: Transaction) => {
+    setEditingTransaction(item);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setEditingTransaction(null); // Reset after closing so "Add" mode works next time
+  };
 
   const gridItems = [
     { name: "Budget", icon: PieChart },
@@ -97,7 +111,6 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
             const Icon = item.icon;
             const isActive = selectedMainItem === item.name;
 
-            // 2. Logic for displayValue moved INSIDE the loop where 'item' exists
             let displayValue = "";
             if (item.name === "Budget") {
               displayValue =
@@ -193,34 +206,41 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
               <Text style={styles.emptyStateText}>No transactions yet.</Text>
             </View>
           ) : (
-            <View style={{ height: 450 }}>
-              <FlashList<Transaction>
-                data={transactions.slice(0, 5)}
-                estimatedItemSize={70}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TransactionItem
-                    item={item}
-                    onPress={(id) => {
-                      Alert.alert("Delete", "Remove this entry?", [
+            <View style={{ paddingBottom: 20 }}>
+              {transactions.slice(0, 5).map((item) => (
+                <TransactionItem
+                  key={item.id}
+                  item={item}
+                  onPress={() => {
+                    Alert.alert(
+                      "Transaction Options",
+                      "What would you like to do?",
+                      [
                         { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Edit",
+                          onPress: () => handleOpenEdit(item),
+                        },
                         {
                           text: "Delete",
                           style: "destructive",
-                          onPress: () => deleteTransaction(id),
+                          onPress: () => deleteTransaction(item.id),
                         },
-                      ]);
-                    }}
-                  />
-                )}
-              />
+                      ],
+                    );
+                  }}
+                />
+              ))}
             </View>
           )}
         </View>
       </ScrollView>
+
+      {/* UPDATED: Pass down the new props to the Modal */}
       <AddTransactionModal
         isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        onClose={handleCloseModal}
+        editingTransaction={editingTransaction}
       />
     </SafeAreaView>
   );
