@@ -33,8 +33,14 @@ export const TransactionItem = ({
         <CategoryIcon size={20} color={categoryData.color} />
       </View>
       <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={styles.transCategory}>{item.category}</Text>
+        {/* REQ: Display note if available, otherwise fallback to category */}
+        <Text style={styles.transCategory} numberOfLines={1}>
+          {item.notes ? item.notes : item.category}
+        </Text>
+        
+        {/* REQ: Keep date, but prepend category if the note took the primary spot */}
         <Text style={styles.transDate}>
+          {item.notes ? `${item.category} • ` : ""}
           {new Date(item.date).toLocaleDateString()}
         </Text>
       </View>

@@ -184,7 +184,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Transactions</Text>
             <TouchableOpacity onPress={() => navigation?.navigate("History")}>
-              <Text style={styles.seeAllText}>See All</Text>
+              <Text style={styles.seeAllText}>View All</Text>
             </TouchableOpacity>
           </View>
 

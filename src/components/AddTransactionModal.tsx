@@ -9,11 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import { X, Plus, Minus } from "lucide-react-native";
 import { useFinanceStore } from "../store/useFinanceStore";
 import { CATEGORIES } from "../constants/categories";
-import { Alert } from "react-native";
 
 interface Props {
   isVisible: boolean;
@@ -25,25 +25,39 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
 
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
+  const [notes, setNotes] = useState("");
   const [type, setType] = useState<"income" | "expense">("income");
 
+  // REQ Logic: 
+  // 1. Amount must be >= 0.1
+  // 2. If category is 'General', note is MANDATORY. 
+  // 3. If category is NOT 'General', note is OPTIONAL.
+  const isAmountValid = parseFloat(amount) >= 0.1;
+  const isCategorySelected = category !== "General";
+  const hasNote = notes.trim().length > 0;
+
+  const isFormValid = isAmountValid && (isCategorySelected || hasNote);
+  
+  // Hint logic: Only show if they have an amount but are stuck on 'General' without a note
+  const showNoteHint = isAmountValid && !isCategorySelected && !hasNote;
+
   const handleSave = () => {
-    // Check if amount is empty or not a positive number
-    if (!amount || parseFloat(amount) <= 0) {
-      Alert.alert("Invalid Amount", "Please enter an amount greater than 0.");
-      return;
-    }
+    const parsedAmount = parseFloat(amount);
+
+    if (!isFormValid) return;
 
     addTransaction({
-      // Removed manual ID - the store handles this!
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       type,
       category,
+      // Pass note if it exists, otherwise undefined for optional support
+      notes: notes.trim() || undefined, 
       date: new Date().toISOString(),
     });
 
-    // Reset and close
+    // Reset local state
     setAmount("");
+    setNotes("");
     setType("income");
     setCategory("General");
     onClose();
@@ -57,23 +71,34 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.overlay}
       >
         <View style={styles.modalContent}>
           <View style={styles.header}>
             <Text style={styles.title}>New Transaction</Text>
+
             <TouchableOpacity onPress={onClose}>
               <X color="#303960" size={24} />
             </TouchableOpacity>
           </View>
+
+          {showNoteHint && (
+            <View style={styles.hintContainer}>
+              <Text style={styles.hintText}>
+                Please select a category or add a note to save
+              </Text>
+            </View>
+          )}
 
           {/* Type Toggle */}
           <View style={styles.toggleContainer}>
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                type === "expense" ? styles.activeExpense : { opacity: 0.5 },
+                type === "expense" 
+                  ? styles.activeExpense 
+                  : { borderColor: "#FEE2E2", opacity: 0.6 },
               ]}
               onPress={() => setType("expense")}
             >
@@ -94,7 +119,9 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                type === "income" ? styles.activeIncome : { opacity: 0.5 },
+                type === "income" 
+                  ? styles.activeIncome 
+                  : { borderColor: "#DCFCE7", opacity: 0.6 },
               ]}
               onPress={() => setType("income")}
             >
@@ -110,14 +137,16 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
             </TouchableOpacity>
           </View>
 
+          {/* Amount Input */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Amount</Text>
             <TextInput
               style={styles.amountInput}
+              disableFullscreenUI={true}
               placeholder="0.00"
               keyboardType="decimal-pad"
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
               autoFocus={true}
               placeholderTextColor="#CBD5E1"
             />
@@ -138,7 +167,11 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
                 return (
                   <TouchableOpacity
                     key={cat.id}
-                    onPress={() => setCategory(cat.name)}
+                    onPress={() =>
+                      setCategory((prev) =>
+                        prev === cat.name ? "General" : cat.name,
+                      )
+                    }
                     style={[
                       styles.categoryChip,
                       isSelected && {
@@ -166,7 +199,31 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
             </ScrollView>
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          {/* Note Input */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              Note / Description {!isCategorySelected && "(Required)"}
+            </Text>
+            <TextInput
+              disableFullscreenUI={true}
+              style={styles.notesInput}
+              placeholder="What was this for?"
+              value={notes}
+              onChangeText={setNotes}
+              placeholderTextColor="#CBD5E1"
+              maxLength={50}
+            />
+          </View>
+
+          {/* Add to Ledger Button */}
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              !isFormValid && { backgroundColor: "#CBD5E1", elevation: 0 },
+            ]}
+            onPress={handleSave}
+            disabled={!isFormValid}
+          >
             <Text style={styles.saveButtonText}>Add to Ledger</Text>
           </TouchableOpacity>
         </View>
@@ -185,16 +242,30 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    padding: 24,
+    padding: 15,
     paddingBottom: 40,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 8,
   },
   title: { fontSize: 20, fontWeight: "800", color: "#303960" },
+  hintContainer: {
+    backgroundColor: "#F1F5F9",
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 24,
+    alignItems: "center",
+    width: "100%",
+  },
+  hintText: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   toggleContainer: { flexDirection: "row", gap: 12, marginBottom: 32 },
   toggleButton: {
     flex: 1,
@@ -203,12 +274,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#F1F5F9",
     gap: 8,
   },
-  activeExpense: { backgroundColor: "#F44336", borderColor: "#F44336" },
-  activeIncome: { backgroundColor: "#4CAF50", borderColor: "#4CAF50" },
+  activeExpense: {
+    backgroundColor: "#F44336",
+    borderColor: "#D32F2F",
+  },
+  activeIncome: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#388E3C",
+  },
   toggleText: { fontWeight: "700", color: "#64748B" },
   activeText: { color: "white" },
   label: { fontSize: 14, fontWeight: "600", color: "#94A3B8", marginBottom: 4 },
@@ -220,12 +297,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     elevation: 2,
+    marginTop: 8,
   },
   saveButtonText: { color: "white", fontWeight: "800", fontSize: 16 },
-
-  // New Category Styles Appended Safely
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   categoryList: {
     gap: 12,
@@ -248,5 +324,13 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 12,
     color: "#94A3B8",
+  },
+  notesInput: {
+    fontSize: 16,
+    color: "#303960",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    paddingVertical: 8,
+    fontWeight: "500",
   },
 });
