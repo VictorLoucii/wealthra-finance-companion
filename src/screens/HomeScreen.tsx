@@ -67,9 +67,9 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
 
   const gridItems = [
     { name: "Budget", icon: PieChart },
-    { name: "Investments", icon: TrendingUp },
+    // { name: "Investments", icon: TrendingUp },
     { name: "Transactions", icon: ArrowRightLeft },
-    { name: "About", icon: Info },
+    // { name: "About", icon: Info },
   ];
 
   return (
@@ -80,9 +80,9 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
         <View style={styles.headerLeftGroup}>
           <Text style={styles.headerTitle}>Dashboard</Text>
           <View style={styles.profileSection}>
-            <Image
+<Image
               source={{
-                uri: "https://ui-avatars.com/api/?name=Moshiur&background=66C2A9&color=fff",
+                uri: "https://ui-avatars.com/api/?name=Victor&background=66C2A9&color=fff",
               }}
               style={styles.userAvatar}
             />
@@ -156,6 +156,33 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                   >
                     {displayValue}
                   </Text>
+                )}
+
+                {/* NEW: Dynamic Progress Bar for Budget Card */}
+                {item.name === "Budget" && budgetLimit > 0 && (
+                  <View
+                    style={[
+                      styles.progressBarContainer,
+                      isActive
+                        ? styles.progressBarTrackActive
+                        : styles.progressBarTrackInactive,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${Math.min((monthlyExpenses / budgetLimit) * 100, 100)}%`,
+                          backgroundColor:
+                            monthlyExpenses / budgetLimit >= 0.9
+                              ? "#FF5252" // 90% Threshold Warning (Red/Orange)
+                              : isActive
+                                ? "#FFFFFF" // White when card is selected
+                                : "#66C2A9", // Wealthra Emerald when inactive
+                        },
+                      ]}
+                    />
+                  </View>
                 )}
               </TouchableOpacity>
             );
@@ -347,6 +374,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   gridValueActive: { color: "rgba(255, 255, 255, 0.8)" },
+
+  // NEW: Progress Bar Styles
+  progressBarContainer: {
+    width: "100%",
+    height: 6,
+    borderRadius: 3,
+    marginTop: 10,
+    overflow: "hidden",
+  },
+  progressBarTrackInactive: {
+    backgroundColor: "#E2E8F0",
+  },
+  progressBarTrackActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
 });
 
 export default HomeScreen;

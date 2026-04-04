@@ -12,6 +12,7 @@ import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TransactionItem } from "../components/TransactionItem";
 import { ChevronLeft, Trash2, Search, X } from "lucide-react-native";
+import { AddTransactionModal } from "../components/AddTransactionModal"; // NEW: Imported Modal
 
 const HistoryScreen = ({ navigation }: { navigation?: any }) => {
   const filters: Array<"All" | "income" | "expense"> = [
@@ -25,6 +26,21 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
   const { transactions, clearAllTransactions, deleteTransaction } =
     useFinanceStore();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // NEW: State for Edit Flow
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  // NEW: Handlers for Edit Flow
+  const handleOpenEdit = (item: Transaction) => {
+    setEditingTransaction(item);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setEditingTransaction(null);
+  };
 
   const handleClearAll = () => {
     if (transactions.length === 0) return;
@@ -42,16 +58,21 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
     );
   };
 
-  const handleDeleteItem = (id: string) => {
+  // UPDATED: Replaced simple Delete with the dual Action Sheet from HomeScreen
+  const handleItemPress = (item: Transaction) => {
     Alert.alert(
-      "Delete Transaction",
-      "Are you sure you want to remove this entry?",
+      "Transaction Options",
+      "What would you like to do?",
       [
         { text: "Cancel", style: "cancel" },
         {
+          text: "Edit",
+          onPress: () => handleOpenEdit(item),
+        },
+        {
           text: "Delete",
           style: "destructive",
-          onPress: () => deleteTransaction(id),
+          onPress: () => deleteTransaction(item.id),
         },
       ],
     );
@@ -109,7 +130,7 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
         {searchQuery.length > 0 && (
           <TouchableOpacity
             onPress={() => setSearchQuery("")}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Makes it easier to tap
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <X color="#94A3B8" size={20} />
           </TouchableOpacity>
@@ -146,7 +167,7 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           <FlashList<Transaction>
             data={filteredData}
             renderItem={({ item }) => (
-              <TransactionItem item={item} onPress={handleDeleteItem} />
+              <TransactionItem item={item} onPress={() => handleItemPress(item)} /> // UPDATED trigger
             )}
             estimatedItemSize={70}
             contentContainerStyle={styles.listContent}
@@ -154,6 +175,13 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           />
         </View>
       )}
+
+      {/* NEW: Inserted the modal at the bottom */}
+      <AddTransactionModal
+        isVisible={isModalVisible}
+        onClose={handleCloseModal}
+        editingTransaction={editingTransaction}
+      />
     </SafeAreaView>
   );
 };
