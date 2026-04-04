@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { MMKV } from "react-native-mmkv";
+import { MMKV } from "react-native-mmkv"; // Imported but unused in current persist config
 import * as Crypto from "expo-crypto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -15,6 +15,7 @@ interface Transaction {
 
 interface FinanceStore {
   transactions: Transaction[];
+  budgetLimit: number; // New: Added for Phase 4 Budget Engine
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   editTransaction: (
     id: string,
@@ -22,6 +23,7 @@ interface FinanceStore {
   ) => void;
   deleteTransaction: (id: string) => void;
   clearAllTransactions: () => void;
+  setBudgetLimit: (limit: number) => void; // New: Added for Phase 4 Budget Engine
   getBalance: () => number;
   getTotalIncome: () => number;
   getTotalExpenses: () => number;
@@ -31,6 +33,7 @@ export const useFinanceStore = create<FinanceStore>()(
   persist(
     (set, get) => ({
       transactions: [],
+      budgetLimit: 0, // Default to 0 to ensure backward compatibility
 
       addTransaction: (transaction) => {
         const newTransaction = {
@@ -62,10 +65,15 @@ export const useFinanceStore = create<FinanceStore>()(
         }));
       },
 
-      // Properly placed inside the state object
       clearAllTransactions: () =>
         set(() => ({
           transactions: [],
+        })),
+
+      // New setter for Budget Planning
+      setBudgetLimit: (limit) =>
+        set(() => ({
+          budgetLimit: limit,
         })),
 
       getBalance: () => {

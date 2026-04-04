@@ -5,8 +5,8 @@ import ExpenseTracker from "./src/screens/ExpenseTracker";
 // Your Screens
 import HomeScreen from "./src/screens/HomeScreen";
 import HistoryScreen from "./src/screens/HistoryScreen";
+import BudgetPlanningScreen from "./src/screens/BudgetPlanning";
 
-// 1. Create the Stack
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -23,6 +23,11 @@ export default function App() {
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="History" component={HistoryScreen} />
           <Stack.Screen name="ExpenseTracker" component={ExpenseTracker} />
+          <Stack.Screen
+            name="BudgetPlanning"
+            component={BudgetPlanningScreen}
+            options={{ headerShown: false }} // We are building a custom header to match Figma
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

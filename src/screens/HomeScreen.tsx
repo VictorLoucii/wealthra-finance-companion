@@ -99,7 +99,14 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                 style={[styles.gridCard, isActive && styles.gridCardActive]}
                 onPress={() => {
                   setSelectedMainItem(item.name);
-                  if (item.name === "Transactions") setIsModalVisible(true);
+                  // Add this specific condition for the "Budget" grid card
+                  if (item.name === "Budget") {
+                    navigation?.navigate("BudgetPlanning");
+                  }
+
+                  if (item.name === "Transactions") {
+                    setIsModalVisible(true);
+                  }
                 }}
               >
                 <Icon
@@ -147,6 +154,8 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                 setSelectedBudgetItem(item);
                 if (item === "Expense Tracker") {
                   navigation?.navigate("ExpenseTracker");
+                } else if (item === "Budget Planning") {
+                  navigation?.navigate("BudgetPlanning");
                 }
               }}
             >
