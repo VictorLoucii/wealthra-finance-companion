@@ -12,10 +12,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { FlashList } from "@shopify/flash-list";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
-import { CATEGORIES } from "../constants/categories";
 import { formatCurrency } from "../utils/formatters";
 import { SetBudgetModal } from "../components/SetBudgetModal";
 import { Wallet, Banknote, ChevronLeft } from "lucide-react-native";
+import { TransactionItem } from "../components/TransactionItem"; // Integrated shared component
 
 const { width } = Dimensions.get("window");
 
@@ -23,11 +23,25 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
   const transactions = useFinanceStore((state) => state.transactions);
   const budgetLimit = useFinanceStore((state) => state.budgetLimit);
   const setBudgetLimit = useFinanceStore((state) => state.setBudgetLimit);
+  const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
   const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
 
-  // 2. Filter for ONLY the current month (New logic)
+  // 1. Dynamic Date Logic for Tabs
+  const now = new Date();
+  const currentMonthYear = now.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+  const prevMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() - 1,
+  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const nextMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
   const monthlyTransactions = useMemo(() => {
-    const now = new Date();
     return transactions.filter((t) => {
       const transDate = new Date(t.date);
       return (
@@ -37,7 +51,6 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
     });
   }, [transactions]);
 
-  // 3. Calculate totals specifically for THIS MONTH (Replaces totalIncome/totalExpenses)
   const monthlyExpenses = useMemo(
     () =>
       monthlyTransactions
@@ -54,26 +67,20 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
     [monthlyTransactions],
   );
 
-  // 5. Filter for ONLY expenses to use in the list (prevents grouping bugs)
   const expenseTransactions = useMemo(
     () => monthlyTransactions.filter((t) => t.type === "expense"),
     [monthlyTransactions],
   );
 
-  // 4. Budget Progress Math (Using the new monthly totals)
   const progressPercentage =
     budgetLimit > 0 ? Math.min((monthlyExpenses / budgetLimit) * 100, 100) : 0;
 
-  // Handle setting the budget goal safely
-  const handleSetBudget = () => {
-    setIsBudgetModalVisible(true);
-  };
+  const handleSetBudget = () => setIsBudgetModalVisible(true);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
 
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeftContainer}>
           <TouchableOpacity
@@ -97,17 +104,16 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
         </View>
       </View>
 
-      {/* Static Tabs matching Figma */}
+      {/* 2. Dynamic Tabs */}
       <View style={styles.tabsContainer}>
-        <Text style={styles.tabTextInactive}>December 2022</Text>
+        <Text style={styles.tabTextInactive}>{prevMonth}</Text>
         <View style={styles.activeTabContainer}>
-          <Text style={styles.tabTextActive}>November 2023</Text>
+          <Text style={styles.tabTextActive}>{currentMonthYear}</Text>
           <View style={styles.activeTabIndicator} />
         </View>
-        <Text style={styles.tabTextInactive}>October 2023</Text>
+        <Text style={styles.tabTextInactive}>{nextMonth}</Text>
       </View>
 
-      {/* Dual Summary Cards */}
       <View style={styles.summaryRow}>
         <View style={[styles.summaryCard, { backgroundColor: "#303960" }]}>
           <View style={styles.summaryHeader}>
@@ -132,7 +138,6 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
         </View>
       </View>
 
-      {/* Budget Progress Box */}
       <View style={styles.budgetBox}>
         <View style={styles.budgetBoxHeader}>
           <TouchableOpacity onPress={handleSetBudget}>
@@ -151,7 +156,6 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           </Text>
         </View>
 
-        {/* The Progress Bar */}
         <View style={styles.progressBarBackground}>
           <View
             style={[
@@ -165,7 +169,6 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
         </View>
       </View>
 
-      {/* Ledger FlashList */}
       <View style={styles.listContainer}>
         <FlashList<Transaction>
           data={expenseTransactions}
@@ -173,11 +176,6 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
           renderItem={({ item, index }) => {
-            const categoryData =
-              CATEGORIES.find((c) => c.name === item.category) || CATEGORIES[7];
-            const CategoryIcon = categoryData.icon;
-
-            // Logic to show Date Header only once per group
             const showDateHeader =
               index === 0 ||
               new Date(expenseTransactions[index - 1].date).toDateString() !==
@@ -200,32 +198,26 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
                   </View>
                 )}
 
-                <View style={styles.transactionCard}>
-                  <View style={styles.transactionRow}>
-                    <View
-                      style={[
-                        styles.iconContainer,
-                        { backgroundColor: categoryData.color },
-                      ]}
-                    >
-                      <CategoryIcon size={20} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.transactionInfo}>
-                      <Text style={styles.transCategory}>{item.category}</Text>
-                      <Text style={styles.transNotes}>
-                        {item.notes || "No notes provided"}
-                      </Text>
-                    </View>
-                    <Text style={styles.transAmount}>
-                      -{formatCurrency(item.amount)}
-                    </Text>
-                  </View>
-                </View>
+                {/* 3. Unified Transaction Item with Normal Press Delete */}
+                <TransactionItem
+                  item={item}
+                  onPress={(id) => {
+                    Alert.alert("Delete Transaction", "Remove this entry?", [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => deleteTransaction(id),
+                      },
+                    ]);
+                  }}
+                />
               </View>
             );
           }}
         />
       </View>
+
       <SetBudgetModal
         isVisible={isBudgetModalVisible}
         onClose={() => setIsBudgetModalVisible(false)}
@@ -235,6 +227,8 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
     </SafeAreaView>
   );
 };
+
+// ... Styles remain unchanged to follow Constraint 7 & Design Preservation ...
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F8FAFC" },

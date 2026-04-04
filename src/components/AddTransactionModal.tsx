@@ -13,6 +13,7 @@ import {
 import { X, Plus, Minus } from "lucide-react-native";
 import { useFinanceStore } from "../store/useFinanceStore";
 import { CATEGORIES } from "../constants/categories";
+import { Alert } from "react-native";
 
 interface Props {
   isVisible: boolean;
@@ -27,14 +28,18 @@ export const AddTransactionModal = ({ isVisible, onClose }: Props) => {
   const [type, setType] = useState<"income" | "expense">("income");
 
   const handleSave = () => {
-    if (!amount || parseFloat(amount) <= 0) return;
+    // Check if amount is empty or not a positive number
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert("Invalid Amount", "Please enter an amount greater than 0.");
+      return;
+    }
 
     addTransaction({
-      id: Date.now().toString(),
+      // Removed manual ID - the store handles this!
       amount: parseFloat(amount),
       type,
       category,
-      date: new Date().toISOString(), // Standardized to ISO 8601 per data schema
+      date: new Date().toISOString(),
     });
 
     // Reset and close
