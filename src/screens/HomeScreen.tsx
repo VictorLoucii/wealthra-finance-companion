@@ -143,7 +143,12 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                 styles.budgetingCard,
                 selectedBudgetItem === item && styles.budgetingCardActive,
               ]}
-              onPress={() => setSelectedBudgetItem(item)}
+              onPress={() => {
+                setSelectedBudgetItem(item);
+                if (item === "Expense Tracker") {
+                  navigation?.navigate("ExpenseTracker");
+                }
+              }}
             >
               <Text
                 style={[
