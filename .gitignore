@@ -32,6 +32,10 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+.env.local
+.env.*
+!.env.example # Optional: Allow an example file to show which keys are needed
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +43,16 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+
+# Development Tools & IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Continue.dev (If you have local project-specific config)
+.continue/
