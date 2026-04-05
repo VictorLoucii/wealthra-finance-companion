@@ -134,7 +134,11 @@ export const AddTransactionModal = ({
             styles.modalContent,
             {
               paddingBottom:
-                Platform.OS === "android" ? keyboardPadding + 40 : 40,
+                Platform.OS === "android"
+                  ? keyboardPadding > 0
+                    ? keyboardPadding + (showNoteHint ? 16 : 64)
+                    : 40
+                  : 40,
               backgroundColor: colors.cardBackground,
             },
           ]}
@@ -149,15 +153,18 @@ export const AddTransactionModal = ({
             </TouchableOpacity>
           </View>
 
-{showNoteHint && (
+          {showNoteHint && (
             <View
               style={[
                 styles.hintContainer,
                 { backgroundColor: colors.divider },
               ]}
             >
-              <Text style={[styles.hintText, { color: "#EF4444" }]}> {/* Changed color */}
-                Please select a category or add a note to save! {/* Added exclamation */}
+              <Text style={[styles.hintText, { color: "#EF4444" }]}>
+                {" "}
+                {/* Changed color */}
+                Please select a category or add a note to save!{" "}
+                {/* Added exclamation */}
               </Text>
             </View>
           )}
@@ -312,6 +319,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
+    paddingTop: Platform.OS === "android" ? 55 : 60, // Adds a safe ceiling below the status bar
   },
   modalContent: {
     backgroundColor: "white",

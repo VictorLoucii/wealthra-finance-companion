@@ -31,6 +31,7 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
   const selectedDateStr = useFinanceStore((state) => state.selectedDate);
   const setSelectedDate = useFinanceStore((state) => state.setSelectedDate);
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
+  const currency = useFinanceStore((state) => state.currency);
 
   // 2. Synchronize Local Date with Global Store
   const currentDate = useMemo(
@@ -211,7 +212,7 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
             <Wallet color="#FFFFFF" size={24} opacity={0.5} />
           </View>
           <Text style={styles.summaryAmount}>
-            -{formatCurrency(monthlyExpenses)}
+            -{formatCurrency(monthlyExpenses, currency)}
           </Text>
           <Text style={styles.summarySubtitle}>This month expense</Text>
         </View>
@@ -222,7 +223,7 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
             <Banknote color="#FFFFFF" size={24} opacity={0.5} />
           </View>
           <Text style={styles.summaryAmount}>
-            +{formatCurrency(monthlyIncome)}
+            +{formatCurrency(monthlyIncome, currency)}
           </Text>
           <Text style={styles.summarySubtitle}>This month income</Text>
         </View>
@@ -250,12 +251,12 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
               budgetLimit > 0 && { color: budgetStatusColor },
             ]}
           >
-            {formatCurrency(monthlyExpenses)}
+            {formatCurrency(monthlyExpenses, currency)}
           </Text>
           <Text style={[styles.budgetLimitText, { color: colors.textMain }]}>
             {" "}
             {/* Modify this */}
-            {formatCurrency(budgetLimit)}
+            {formatCurrency(budgetLimit, currency)}
           </Text>
         </View>
 
