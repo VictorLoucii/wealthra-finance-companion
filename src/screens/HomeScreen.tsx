@@ -14,47 +14,58 @@ import {
   Bell,
   Wallet,
   PieChart,
-  TrendingUp,
   ArrowRightLeft,
-  Info,
 } from "lucide-react-native";
-import { FlashList } from "@shopify/flash-list";
 import { AddTransactionModal } from "../components/AddTransactionModal";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { TransactionItem } from "../components/TransactionItem";
 
 const HomeScreen = ({ navigation }: { navigation?: any }) => {
+  // 1. Store Selectors
   const transactions = useFinanceStore((state) => state.transactions);
-  const budgetLimit = useFinanceStore((state) => state.budgetLimit);
+  const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
   const balance = useFinanceStore((state) => state.getBalance());
-  const totalIncome = useFinanceStore((state) => state.getTotalIncome());
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
+  
+  // Fixes "Sticky Date": Listen to the global selected date
+  const selectedDateStr = useFinanceStore((state) => state.selectedDate);
+  
+  // 2. Derive Current Context
+  const selectedDate = useMemo(
+    () => new Date(selectedDateStr),
+    [selectedDateStr],
+  );
+
+  // Derive the key and specific budget for the active month (YYYY-MM format)
+  const monthKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}`;
+  const currentMonthBudget = monthlyBudgets[monthKey] ?? 0;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  // NEW: State to track which transaction is being edited
-  const [editingTransaction, setEditingTransaction] =
-    useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedMainItem, setSelectedMainItem] = useState("Budget");
-  const [selectedBudgetItem, setSelectedBudgetItem] =
-    useState("Expense Tracker");
+  const [selectedBudgetItem, setSelectedBudgetItem] = useState("Expense Tracker");
 
-  // Calculate Monthly Expenses
-  const monthlyExpenses = useMemo(() => {
-    const now = new Date();
-    return transactions
-      .filter((t) => {
-        const d = new Date(t.date);
-        return (
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear() &&
-          t.type === "expense"
-        );
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  // 3. Calculate Monthly Stats based on Global selectedDate
+  const { monthlyExpenses, monthlyIncome } = useMemo(() => {
+    const currentMonthTransactions = transactions.filter((t) => {
+      const d = new Date(t.date);
+      return (
+        d.getMonth() === selectedDate.getMonth() &&
+        d.getFullYear() === selectedDate.getFullYear()
+      );
+    });
 
-  // NEW: Handlers for edit flow
+    return {
+      monthlyExpenses: currentMonthTransactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0),
+      monthlyIncome: currentMonthTransactions
+        .filter((t) => t.type === "income")
+        .reduce((sum, t) => sum + t.amount, 0),
+    };
+  }, [transactions, selectedDate]);
+
   const handleOpenEdit = (item: Transaction) => {
     setEditingTransaction(item);
     setIsModalVisible(true);
@@ -62,14 +73,12 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
-    setEditingTransaction(null); // Reset after closing so "Add" mode works next time
+    setEditingTransaction(null);
   };
 
   const gridItems = [
     { name: "Budget", icon: PieChart },
-    // { name: "Investments", icon: TrendingUp },
     { name: "Transactions", icon: ArrowRightLeft },
-    // { name: "About", icon: Info },
   ];
 
   return (
@@ -78,9 +87,11 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
 
       <View style={styles.header}>
         <View style={styles.headerLeftGroup}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
+          <Text style={styles.headerTitle}>
+            {selectedDate.toLocaleDateString("en-US", { month: "long" })}
+          </Text>
           <View style={styles.profileSection}>
-<Image
+            <Image
               source={{
                 uri: "https://ui-avatars.com/api/?name=Victor&background=66C2A9&color=fff",
               }}
@@ -112,13 +123,26 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
             const isActive = selectedMainItem === item.name;
 
             let displayValue = "";
+            let displayPercentage = 0;
+            let budgetStatusColor = "#66C2A9";
+
             if (item.name === "Budget") {
-              displayValue =
-                budgetLimit > 0
-                  ? `${formatCurrency(monthlyExpenses)} / ${formatCurrency(budgetLimit)}`
-                  : formatCurrency(monthlyExpenses);
+              if (currentMonthBudget > 0) {
+                displayValue = `${formatCurrency(monthlyExpenses)} / ${formatCurrency(currentMonthBudget)}`;
+                displayPercentage = Math.round(
+                  (monthlyExpenses / currentMonthBudget) * 100,
+                );
+                budgetStatusColor =
+                  displayPercentage < 70
+                    ? "#66C2A9"
+                    : displayPercentage >= 90
+                      ? "#FF3B30"
+                      : "#FF9500";
+              } else {
+                displayValue = formatCurrency(monthlyExpenses);
+              }
             } else if (item.name === "Transactions") {
-              displayValue = formatCurrency(totalIncome);
+              displayValue = formatCurrency(monthlyIncome);
             }
 
             return (
@@ -158,31 +182,43 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                   </Text>
                 )}
 
-                {/* NEW: Dynamic Progress Bar for Budget Card */}
-                {item.name === "Budget" && budgetLimit > 0 && (
-                  <View
-                    style={[
-                      styles.progressBarContainer,
-                      isActive
-                        ? styles.progressBarTrackActive
-                        : styles.progressBarTrackInactive,
-                    ]}
-                  >
+                {item.name === "Budget" && currentMonthBudget > 0 && (
+                  <>
                     <View
                       style={[
-                        styles.progressBarFill,
-                        {
-                          width: `${Math.min((monthlyExpenses / budgetLimit) * 100, 100)}%`,
-                          backgroundColor:
-                            monthlyExpenses / budgetLimit >= 0.9
-                              ? "#FF5252" // 90% Threshold Warning (Red/Orange)
-                              : isActive
-                                ? "#FFFFFF" // White when card is selected
-                                : "#66C2A9", // Wealthra Emerald when inactive
-                        },
+                        styles.progressBarContainer,
+                        isActive
+                          ? styles.progressBarTrackActive
+                          : styles.progressBarTrackInactive,
                       ]}
-                    />
-                  </View>
+                    >
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          {
+                            width: `${Math.min(displayPercentage, 100)}%`,
+                            backgroundColor:
+                              isActive && displayPercentage < 70
+                                ? "#FFFFFF"
+                                : budgetStatusColor,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        marginTop: 6,
+                        fontSize: 12,
+                        fontWeight: "800",
+                        color:
+                          isActive && displayPercentage < 70
+                            ? "#FFFFFF"
+                            : budgetStatusColor,
+                      }}
+                    >
+                      {displayPercentage}%
+                    </Text>
+                  </>
                 )}
               </TouchableOpacity>
             );
@@ -263,7 +299,6 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
         </View>
       </ScrollView>
 
-      {/* UPDATED: Pass down the new props to the Modal */}
       <AddTransactionModal
         isVisible={isModalVisible}
         onClose={handleCloseModal}
@@ -374,8 +409,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   gridValueActive: { color: "rgba(255, 255, 255, 0.8)" },
-
-  // NEW: Progress Bar Styles
   progressBarContainer: {
     width: "100%",
     height: 6,

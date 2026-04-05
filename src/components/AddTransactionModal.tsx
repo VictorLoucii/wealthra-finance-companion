@@ -20,9 +20,16 @@ interface Props {
   editingTransaction?: Transaction | null; // Optional: for Edit Mode
 }
 
-export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: Props) => {
+export const AddTransactionModal = ({
+  isVisible,
+  onClose,
+  editingTransaction,
+}: Props) => {
   const addTransaction = useFinanceStore((state) => state.addTransaction);
   const editTransaction = useFinanceStore((state) => state.editTransaction);
+  const lastUsedType =
+    useFinanceStore((state) => state.lastUsedType) || "income"; // Fallback for backward compatibility
+  const setLastUsedType = useFinanceStore((state) => state.setLastUsedType);
 
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
@@ -41,15 +48,15 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
       setAmount("");
       setCategory("General");
       setNotes("");
-      setType("income");
+      setType(lastUsedType); // Uses the sticky state from store
     }
-  }, [isVisible, editingTransaction]);
+  }, [isVisible, editingTransaction, lastUsedType]);
 
   const isAmountValid = parseFloat(amount) >= 0.1;
   const isCategorySelected = category !== "General";
   const hasNote = notes.trim().length > 0;
   const isFormValid = isAmountValid && (isCategorySelected || hasNote);
-  
+
   const showNoteHint = isAmountValid && !isCategorySelected && !hasNote;
 
   const handleSave = () => {
@@ -70,9 +77,11 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
         amount: parsedAmount,
         type,
         category,
-        notes: notes.trim() || undefined, 
+        notes: notes.trim() || undefined,
         date: new Date().toISOString(),
       });
+      // Save the user's choice for the next time the modal opens
+      if (setLastUsedType) setLastUsedType(type);
     }
 
     onClose();
@@ -112,14 +121,22 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                type === "expense" 
-                  ? styles.activeExpense 
+                type === "expense"
+                  ? styles.activeExpense
                   : { borderColor: "#FEE2E2", opacity: 0.6 },
               ]}
               onPress={() => setType("expense")}
             >
-              <Minus size={16} color={type === "expense" ? "white" : "#F44336"} />
-              <Text style={[styles.toggleText, type === "expense" && styles.activeText]}>
+              <Minus
+                size={16}
+                color={type === "expense" ? "white" : "#F44336"}
+              />
+              <Text
+                style={[
+                  styles.toggleText,
+                  type === "expense" && styles.activeText,
+                ]}
+              >
                 Expense
               </Text>
             </TouchableOpacity>
@@ -127,14 +144,19 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                type === "income" 
-                  ? styles.activeIncome 
+                type === "income"
+                  ? styles.activeIncome
                   : { borderColor: "#DCFCE7", opacity: 0.6 },
               ]}
               onPress={() => setType("income")}
             >
               <Plus size={16} color={type === "income" ? "white" : "#4CAF50"} />
-              <Text style={[styles.toggleText, type === "income" && styles.activeText]}>
+              <Text
+                style={[
+                  styles.toggleText,
+                  type === "income" && styles.activeText,
+                ]}
+              >
                 Income
               </Text>
             </TouchableOpacity>
@@ -155,18 +177,41 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
 
           <View style={styles.section}>
             <Text style={styles.label}>Category</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryList}>
-              {CATEGORIES.map((cat) => {
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryList}
+            >
+              {CATEGORIES.filter(
+                (cat) => !cat.type || cat.type === type || cat.type === "both",
+              ).map((cat) => {
                 const Icon = cat.icon;
                 const isSelected = category === cat.name;
                 return (
                   <TouchableOpacity
                     key={cat.id}
-                    onPress={() => setCategory(cat.name)}
-                    style={[styles.categoryChip, isSelected && { backgroundColor: cat.color + "20", borderColor: cat.color }]}
+                    onPress={() =>
+                      setCategory(category === cat.name ? "General" : cat.name)
+                    }
+                    style={[
+                      styles.categoryChip,
+                      isSelected && {
+                        backgroundColor: cat.color + "20",
+                        borderColor: cat.color,
+                      },
+                    ]}
                   >
-                    <Icon size={18} color={isSelected ? cat.color : "#94A3B8"} style={styles.categoryIcon} />
-                    <Text style={[styles.categoryText, isSelected && { color: cat.color, fontWeight: "700" }]}>
+                    <Icon
+                      size={18}
+                      color={isSelected ? cat.color : "#94A3B8"}
+                      style={styles.categoryIcon}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        isSelected && { color: cat.color, fontWeight: "700" },
+                      ]}
+                    >
                       {cat.name}
                     </Text>
                   </TouchableOpacity>
@@ -176,7 +221,9 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.label}>Note / Description {!isCategorySelected && "(Required)"}</Text>
+            <Text style={styles.label}>
+              Note / Description {!isCategorySelected && "(Required)"}
+            </Text>
             <TextInput
               style={styles.notesInput}
               placeholder="What was this for?"
@@ -188,7 +235,10 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
           </View>
 
           <TouchableOpacity
-            style={[styles.saveButton, !isFormValid && { backgroundColor: "#CBD5E1", elevation: 0 }]}
+            style={[
+              styles.saveButton,
+              !isFormValid && { backgroundColor: "#CBD5E1", elevation: 0 },
+            ]}
             onPress={handleSave}
             disabled={!isFormValid}
           >
@@ -201,7 +251,6 @@ export const AddTransactionModal = ({ isVisible, onClose, editingTransaction }: 
     </Modal>
   );
 };
-
 
 const styles = StyleSheet.create({
   overlay: {

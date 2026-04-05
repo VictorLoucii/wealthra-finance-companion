@@ -6,14 +6,11 @@ import { formatCurrency } from "../utils/formatters";
 
 interface TransactionItemProps {
   item: Transaction;
-//   onLongPress?: (id: string) => void;
-onPress?: (id: string) => void; 
+  //   onLongPress?: (id: string) => void;
+  onPress?: (id: string) => void;
 }
 
-export const TransactionItem = ({
-  item,
-  onPress,
-}: TransactionItemProps) => {
+export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
   const categoryData =
     CATEGORIES.find((c) => c.name === item.category) || CATEGORIES[7]; // Default to 'General'
   const CategoryIcon = categoryData.icon;
@@ -37,7 +34,7 @@ export const TransactionItem = ({
         <Text style={styles.transCategory} numberOfLines={1}>
           {item.notes ? item.notes : item.category}
         </Text>
-        
+
         {/* REQ: Keep date, but prepend category if the note took the primary spot */}
         <Text style={styles.transDate}>
           {item.notes ? `${item.category} • ` : ""}
@@ -47,7 +44,7 @@ export const TransactionItem = ({
       <Text
         style={[
           styles.transAmount,
-          { color: item.type === "income" ? "#4CAF50" : "#303960" },
+          { color: item.type === "income" ? "#4CAF50" : "#F44336" },
         ]}
       >
         {formatCurrency(item.type === "expense" ? -item.amount : item.amount)}

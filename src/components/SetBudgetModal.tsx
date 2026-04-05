@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Alert } from "react-native";
 
 interface SetBudgetModalProps {
   isVisible: boolean;
@@ -30,11 +31,26 @@ export const SetBudgetModal = ({
     if (isVisible) setValue(currentLimit > 0 ? currentLimit.toString() : "");
   }, [isVisible]);
 
+  const handleChangeText = (text: string) => {
+    // Regex allows only numbers and one decimal point
+    const cleaned = text.replace(/[^0-9.]/g, "");
+    // Ensure only one decimal point exists
+    const parts = cleaned.split(".");
+    if (parts.length > 2) return;
+    setValue(cleaned);
+  };
+
   const handleSave = () => {
     const num = parseFloat(value);
-    if (!isNaN(num)) {
+    // NEW: Validation to ensure budget is a positive, valid number
+    if (!isNaN(num) && num > 0) {
       onSave(num);
       onClose();
+    } else {
+      Alert.alert(
+        "Invalid Budget",
+        "Please enter a budget amount greater than 0.",
+      );
     }
   };
 
@@ -54,17 +70,22 @@ export const SetBudgetModal = ({
             <TextInput
               style={styles.input}
               placeholder="e.g. 2000"
-              keyboardType="numeric"
+              keyboardType="decimal-pad" // Better UX for numbers
               value={value}
-              onChangeText={setValue}
+              onChangeText={handleChangeText} // Swapped for the new handler
               autoFocus
+              maxLength={10} // Prevents extreme overflow values
             />
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <TouchableOpacity
+                style={[styles.saveButton, !value && { opacity: 0.5 }]}
+                onPress={handleSave}
+                disabled={!value} // Prevents empty submissions
+              >
                 <Text style={styles.saveButtonText}>Save Goal</Text>
               </TouchableOpacity>
             </View>

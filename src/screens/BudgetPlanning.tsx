@@ -15,41 +15,76 @@ import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { SetBudgetModal } from "../components/SetBudgetModal";
 import { Wallet, Banknote, ChevronLeft } from "lucide-react-native";
-import { TransactionItem } from "../components/TransactionItem"; // Integrated shared component
+import { TransactionItem } from "../components/TransactionItem"; 
+import { AddTransactionModal } from "../components/AddTransactionModal";
 
 const { width } = Dimensions.get("window");
 
 const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
+  // 1. Pull Global State & Actions
   const transactions = useFinanceStore((state) => state.transactions);
-  const budgetLimit = useFinanceStore((state) => state.budgetLimit);
-  const setBudgetLimit = useFinanceStore((state) => state.setBudgetLimit);
+  const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
+  const setMonthlyBudget = useFinanceStore((state) => state.setMonthlyBudget);
+  const selectedDateStr = useFinanceStore((state) => state.selectedDate);
+  const setSelectedDate = useFinanceStore((state) => state.setSelectedDate);
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
-  const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
 
-  // 1. Dynamic Date Logic for Tabs
-  const now = new Date();
-  const currentMonthYear = now.toLocaleDateString("en-US", {
+  // 2. Synchronize Local Date with Global Store
+  const currentDate = useMemo(() => new Date(selectedDateStr), [selectedDateStr]);
+  
+  // 3. Derive Month Key and Specific Budget
+  const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+  const budgetLimit = monthlyBudgets[monthKey] ?? 0;
+
+  const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
+  const [isTransactionModalVisible, setIsTransactionModalVisible] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  const handleOpenEdit = (item: Transaction) => {
+    setEditingTransaction(item);
+    setIsTransactionModalVisible(true);
+  };
+
+  const handleCloseTransactionModal = () => {
+    setIsTransactionModalVisible(false);
+    setEditingTransaction(null);
+  };
+
+  // 4. Update Global State via Tab Navigation
+  const handleTabChange = (offset: number) => {
+    const newDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + offset,
+      1
+    );
+    setSelectedDate(newDate);
+  };
+
+  const prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  const nextDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+
+  const currentMonthYear = currentDate.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
-  const prevMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() - 1,
-  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  const nextMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const prevMonth = prevDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+  const nextMonth = nextDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const monthlyTransactions = useMemo(() => {
     return transactions.filter((t) => {
       const transDate = new Date(t.date);
       return (
-        transDate.getMonth() === now.getMonth() &&
-        transDate.getFullYear() === now.getFullYear()
+        transDate.getMonth() === currentDate.getMonth() &&
+        transDate.getFullYear() === currentDate.getFullYear()
       );
     });
-  }, [transactions]);
+  }, [transactions, currentDate]);
 
   const monthlyExpenses = useMemo(
     () =>
@@ -75,6 +110,16 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
   const progressPercentage =
     budgetLimit > 0 ? Math.min((monthlyExpenses / budgetLimit) * 100, 100) : 0;
 
+  const displayPercentage =
+    budgetLimit > 0 ? Math.round((monthlyExpenses / budgetLimit) * 100) : 0;
+
+  const budgetStatusColor =
+    budgetLimit === 0 || displayPercentage < 70
+      ? "#66C2A9" 
+      : displayPercentage >= 90
+        ? "#FF3B30" 
+        : "#FF9500"; 
+
   const handleSetBudget = () => setIsBudgetModalVisible(true);
 
   return (
@@ -96,22 +141,33 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
         <View style={styles.profileSection}>
           <Image
             source={{
-              uri: "https://ui-avatars.com/api/?name=Moshiur&background=66C2A9&color=fff",
+              uri: "https://ui-avatars.com/api/?name=Victor&background=66C2A9&color=fff",
             }}
             style={styles.userAvatar}
           />
-          <Text style={styles.userName}>MOSHIUR</Text>
+          <Text style={styles.userName}>VICTOR</Text>
         </View>
       </View>
 
-      {/* 2. Dynamic Tabs */}
       <View style={styles.tabsContainer}>
-        <Text style={styles.tabTextInactive}>{prevMonth}</Text>
+        <TouchableOpacity
+          onPress={() => handleTabChange(-1)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.tabTextInactive}>{prevMonth}</Text>
+        </TouchableOpacity>
+
         <View style={styles.activeTabContainer}>
           <Text style={styles.tabTextActive}>{currentMonthYear}</Text>
           <View style={styles.activeTabIndicator} />
         </View>
-        <Text style={styles.tabTextInactive}>{nextMonth}</Text>
+
+        <TouchableOpacity
+          onPress={() => handleTabChange(1)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.tabTextInactive}>{nextMonth}</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.summaryRow}>
@@ -143,12 +199,20 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           <TouchableOpacity onPress={handleSetBudget}>
             <Text style={styles.budgetBoxTitle}>
               Budget So Far{" "}
+              <Text style={{ color: budgetStatusColor }}>
+                ({displayPercentage}%)
+              </Text>{" "}
               <Text style={{ fontSize: 12, color: "#66C2A9" }}>(Edit)</Text>
             </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.budgetAmountsRow}>
-          <Text style={styles.budgetSpentText}>
+          <Text
+            style={[
+              styles.budgetSpentText,
+              budgetLimit > 0 && { color: budgetStatusColor },
+            ]}
+          >
             {formatCurrency(monthlyExpenses)}
           </Text>
           <Text style={styles.budgetLimitText}>
@@ -160,10 +224,10 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           <View
             style={[
               styles.progressBarFill,
-              { width: `${progressPercentage}%` },
-              monthlyExpenses > budgetLimit && budgetLimit > 0
-                ? { backgroundColor: "#FF3B30" }
-                : {},
+              {
+                width: `${progressPercentage}%`,
+                backgroundColor: budgetStatusColor,
+              },
             ]}
           />
         </View>
@@ -198,18 +262,25 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
                   </View>
                 )}
 
-                {/* 3. Unified Transaction Item with Normal Press Delete */}
                 <TransactionItem
                   item={item}
-                  onPress={(id) => {
-                    Alert.alert("Delete Transaction", "Remove this entry?", [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: () => deleteTransaction(id),
-                      },
-                    ]);
+                  onPress={() => {
+                    Alert.alert(
+                      "Transaction Options",
+                      "What would you like to do?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Edit",
+                          onPress: () => handleOpenEdit(item),
+                        },
+                        {
+                          text: "Delete",
+                          style: "destructive",
+                          onPress: () => deleteTransaction(item.id),
+                        },
+                      ],
+                    );
                   }}
                 />
               </View>
@@ -221,14 +292,17 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
       <SetBudgetModal
         isVisible={isBudgetModalVisible}
         onClose={() => setIsBudgetModalVisible(false)}
-        onSave={(amount) => setBudgetLimit(amount)}
+        onSave={(amount) => setMonthlyBudget(monthKey, amount)}
         currentLimit={budgetLimit}
+      />
+      <AddTransactionModal
+        isVisible={isTransactionModalVisible}
+        onClose={handleCloseTransactionModal}
+        editingTransaction={editingTransaction}
       />
     </SafeAreaView>
   );
 };
-
-// ... Styles remain unchanged to follow Constraint 7 & Design Preservation ...
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F8FAFC" },
@@ -245,8 +319,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   backButton: {
-    marginLeft: -10, // Pulls the arrow closer to the edge for a cleaner look
-    padding: 8, // Increases tap target size
+    marginLeft: -10, 
+    padding: 8, 
   },
   headerTitle: {
     fontSize: 22,

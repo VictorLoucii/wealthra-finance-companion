@@ -1,23 +1,20 @@
 import { 
-  Utensils, 
-  Home, 
-  Car, 
-  Briefcase, 
-  Gamepad2, 
-  ShoppingBag, 
-  HeartPulse, 
-  Layers 
+  Utensils, Home, Car, Briefcase, Gamepad2, ShoppingBag, HeartPulse, Layers,
+  Banknote, Laptop, Gift 
 } from 'lucide-react-native';
 
 export const CATEGORIES = [
-  { id: '1', name: 'Food', icon: Utensils, color: '#FF9500' },
-  { id: '2', name: 'Rent', icon: Home, color: '#5856D6' },
-  { id: '3', name: 'Transport', icon: Car, color: '#007AFF' },
-  { id: '4', name: 'Salary', icon: Briefcase, color: '#34C759' },
-  { id: '5', name: 'Leisure', icon: Gamepad2, color: '#AF52DE' },
-  { id: '6', name: 'Shopping', icon: ShoppingBag, color: '#FF2D55' },
-  { id: '7', name: 'Health', icon: HeartPulse, color: '#FF3B30' },
-  { id: '8', name: 'General', icon: Layers, color: '#8E8E93' },
+  { id: '1', name: 'Food', icon: Utensils, color: '#FF9500', type: 'expense' },
+  { id: '2', name: 'Rent', icon: Home, color: '#5856D6', type: 'expense' },
+  { id: '3', name: 'Transport', icon: Car, color: '#007AFF', type: 'expense' },
+  { id: '4', name: 'Salary', icon: Briefcase, color: '#34C759', type: 'income' },
+  { id: '5', name: 'Leisure', icon: Gamepad2, color: '#AF52DE', type: 'expense' },
+  { id: '6', name: 'Shopping', icon: ShoppingBag, color: '#FF2D55', type: 'expense' },
+  { id: '7', name: 'Health', icon: HeartPulse, color: '#FF3B30', type: 'expense' },
+  { id: '9', name: 'Stipend', icon: Banknote, color: '#2E8B57', type: 'income' },
+  { id: '10', name: 'Freelance', icon: Laptop, color: '#059669', type: 'income' },
+  { id: '11', name: 'Refunds', icon: Gift, color: '#10B981', type: 'income' },
+  { id: '8', name: 'General', icon: Layers, color: '#8E8E93', type: 'both' },
 ];
 
 export type CategoryName = typeof CATEGORIES[number]['name'];
