@@ -14,6 +14,7 @@ interface TransactionItemProps {
 export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
+  const currency = useFinanceStore((state) => state.currency);
   const categoryData =
     CATEGORIES.find((c) => c.name === item.category) || CATEGORIES[7]; // Default to 'General'
   const CategoryIcon = categoryData.icon;
@@ -56,7 +57,7 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
           { color: item.type === "income" ? "#4CAF50" : "#F44336" },
         ]}
       >
-        {formatCurrency(item.type === "expense" ? -item.amount : item.amount)}
+{formatCurrency(item.type === "expense" ? -item.amount : item.amount, currency)}        
       </Text>
     </TouchableOpacity>
   );
