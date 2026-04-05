@@ -1,3 +1,6 @@
+
+---
+
 # 📂 Project: Wealthra Finance Companion
 **Sub-title**: *A Lightweight Personal Finance Companion for Zorvyn FinTech*
 
@@ -8,48 +11,57 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
 
 ### 🚀 Core Requirements & Features
 * **Command Center Dashboard**: An informative overview featuring **Global Balance**, **Monthly Income**, and **Monthly Expenses**.
-* **Dynamic Light/Dark Mode**: A system-wide, professional theme toggle built with centralized semantic color mapping, ensuring a premium and accessible experience in both high-light and low-light environments.
-* **Localization & Multi-Currency**: Built-in support for **Indian Rupees (₹)** and **US Dollars ($)**. Uses `Intl.NumberFormat` with the `en-IN` locale to ensure correct comma placement (e.g., 1,00,000) for Indian users.
-* **Dynamic "Time-Travel" Tracker**: A sophisticated month-to-month navigation system that updates all dashboard metrics, charts, and transaction lists based on the selected month.
-* **Advanced Transaction Engine**: Full CRUD support (Create, Read, Update, Delete) with a unified modal-driven input flow.
-* **Insights Screen (Expense Tracker)**: A dedicated section providing a **Category Breakdown** and identifying the **Highest Spending Category** via a dynamic doughnut chart.
-* **Goal Feature: Smart Budgeting**: A budget limit tracker that provides immediate visual feedback through a "Traffic Light" progress system.
-* **High-Performance Search**: Real-time, case-insensitive transaction filtering with dedicated **Empty States** for missing data.
+* **Dynamic Light/Dark Mode**: A system-wide, professional theme toggle built with centralized semantic color mapping.
+* **Currency Value Engine**: Full support for **Indian Rupees (₹)** and **US Dollars ($)**. Unlike basic trackers, Wealthra performs real-time mathematical conversion of all historical transactions and budget limits when toggling currencies.
+* **Localization Polish**: Uses `Intl.NumberFormat` with the `en-IN` locale to ensure correct Indian numbering system comma placement (e.g., 1,00,000) for INR users.
+* **Dynamic "Time-Travel" Tracker**: A sophisticated month-to-month navigation system that updates all dashboard metrics based on the selected month.
+* **Insights Screen**: A dedicated section providing a **Category Breakdown** via a dynamic doughnut chart.
+* **Goal Feature: Smart Budgeting**: A budget limit tracker with a "Traffic Light" progress system (**Green** $\to$ **Orange** $\to$ **Red**).
 
 ---
 
 ### 🛠️ Tech Stack & Architecture
-* **Framework**: React Native (Expo SDK 54) with **TypeScript** for type-safe financial logic.
-* **State Management**: **Zustand** with **AsyncStorage** persistence middleware for a robust, offline-first experience.
-* **Data Handling**: Utilizes a `monthKey` mapping strategy (`YYYY-MM`) to isolate budgets and transactions, preventing data leakage across months.
-* **UI/UX Components**: `@shopify/flash-list` for buttery-smooth scrolling and **Lucide Icons** for a clean, professional aesthetic.
+* **Framework**: React Native (Expo SDK 54) + **TypeScript**.
+* **State Management**: **Zustand** with **AsyncStorage** persistence. 
+* **State Mapping**: Implemented a custom `setCurrency` action in the store that maps through the `transactions` array and `monthlyBudgets` record to maintain data integrity during currency shifts.
+* **Data Handling**: Utilizes a `monthKey` mapping strategy (`YYYY-MM`) to isolate budgets and transactions.
 
 ---
 
 ### 💡 Product Thinking & Design Assumptions
-In alignment with the assignment’s focus on "Reasonable Assumptions" and "Polish over Complexity," Wealthra implements several specific design choices:
+In alignment with the assignment’s focus on "Reasonable Assumptions" and "Polish over Complexity," Wealthra implements:
 
-1. **The "Global Wallet" Logic**: While the budget and transactions "time-travel" per month, the top-right **Balance Chip** remains a global sum. This provides the user with an immutable "Ground Truth" of their actual cash-on-hand regardless of which historical month they are viewing.
-2. **Traffic Light Budgeting**: To drive habit change, the budget progress bar shifts colors: **Green** (Healthy), **Orange** (Warning @ 70%), and **Red** (Critical @ 90%). This nudges users toward smarter spending *before* they exceed their goals.
-3. **Validated Interaction**: To ensure data reliability, amount fields are numeric-restricted, and categories are pre-selected to maintain clean insights for the doughnut chart.
-4. **Zero-Friction Navigation**: Tapping a dashboard metric (like "Transactions") automatically triggers the relevant action (opening the Add Modal), reducing the "taps-to-task" ratio.
+1. **Offline-First Currency Conversion**:
+   To ensure the app remains functional in zero-connectivity environments (subways, travel), I implemented a fixed-rate conversion engine:
+   $$1 \text{ USD} \approx 92.74 \text{ INR}$$
+   **Trade-off**: While live APIs offer precision, a fixed rate ensures **instant UI feedback** and prevents "data flickering" caused by fluctuating rates, providing a more stable user experience.
+
+2. **The "Global Wallet" Logic**: 
+   While budgets "time-travel" per month, the **Balance Chip** remains a global sum, providing an immutable "Ground Truth" of actual cash-on-hand.
+
+3. **Traffic Light Budgeting**: 
+   To drive habit change, the progress bar shifts colors at specific thresholds: **Orange** at 70% and **Red** at 90% of the limit.
+
+4. **Zero-Friction Interaction**: 
+   Numeric-restricted fields and pre-selected categories reduce the "taps-to-task" ratio, encouraging high-frequency logging.
 
 ---
 
 ### ⚙️ Setup Instructions
-Follow these steps to evaluate the application on your local machine or physical device:
-
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/VictorLoucii/wealthra-finance-companion](https://github.com/VictorLoucii/wealthra-finance-companion)
+git clone https://github.com/VictorLoucii/wealthra-finance-companion
 cd wealthra-finance-companion
 
 # 2. Install dependencies
 npm install
 
-# 3. Start the project node
+# 3. Start the Expo server
 npx expo start
 
+# 4. Run on device/emulator
+# Press 'a' for Android or 'i' for iOS in the terminal
+```
 
-# 3. Start the project emulator/device
-npx expo run:android or npx expo run:android
+---
+
