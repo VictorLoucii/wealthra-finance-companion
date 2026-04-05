@@ -4,10 +4,15 @@
 
 # 📂 Project: Wealthra Finance Companion
 
-**Sub-title**: *A Lightweight Personal Finance Companion for Zorvyn FinTech*
+A lightweight personal finance app to help users track expenses, manage budgets, and stay in control of their money.
 
-###🎬 Project Demo
+---
+
+## 🎬 Demo
+
 ![App Demo](./screenshots/AppDemo.gif)
+
+---
 
 ### 📱 App Preview (Light vs. Dark Mode)
 
