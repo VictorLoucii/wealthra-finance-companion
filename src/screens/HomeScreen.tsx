@@ -314,7 +314,8 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
         <View style={{ marginTop: 32 }}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textMain }]}>
-              Recent Transactions
+              Recent Transactions (
+              {selectedDate.toLocaleDateString("en-US", { month: "long" })})
             </Text>
             <TouchableOpacity onPress={() => navigation?.navigate("History")}>
               <Text style={styles.seeAllText}>View All</Text>

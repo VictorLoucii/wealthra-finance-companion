@@ -70,7 +70,8 @@ export const AddTransactionModal = ({
   // Sync state when editingTransaction changes or modal opens
   useEffect(() => {
     if (isVisible && editingTransaction) {
-      setAmount(editingTransaction.amount.toString());
+      // This rounds the math to 2 decimal places and cleans up any extra zeros
+      setAmount(parseFloat(editingTransaction.amount.toFixed(2)).toString());
       setCategory(editingTransaction.category);
       setNotes(editingTransaction.notes || "");
       setType(editingTransaction.type);

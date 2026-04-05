@@ -26,8 +26,12 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
   const [activeFilter, setActiveFilter] = useState<
     "All" | "income" | "expense"
   >("All");
-  const { transactions, clearAllTransactions, deleteTransaction } =
-    useFinanceStore();
+  const {
+    transactions,
+    clearAllTransactions,
+    deleteTransaction,
+    selectedDate,
+  } = useFinanceStore();
   const [searchQuery, setSearchQuery] = useState("");
 
   // NEW: State for Edit Flow
@@ -112,7 +116,11 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           <ChevronLeft color={colors.textMain} size={28} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textMain }]}>
-          History
+          History (
+          {new Date(selectedDate).toLocaleDateString("en-US", {
+            month: "long",
+          })}
+          )
         </Text>
         <TouchableOpacity
           onPress={handleClearAll}

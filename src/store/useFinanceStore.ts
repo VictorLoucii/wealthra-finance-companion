@@ -48,7 +48,38 @@ export const useFinanceStore = create<FinanceStore>()(
       currency: "INR", // Backward Compatibility: defaults to USD
       theme: "light", // Backward Compatibility: defaults to light mode
 
-      setCurrency: (currency) => set({ currency }),
+setCurrency: (newCurrency) =>
+        set((state) => {
+          // Prevent unnecessary recalculations if the currency isn't actually changing
+          if (state.currency === newCurrency) return {};
+
+          // Using 92.74 based on your latest note. Adjust to 83 if adhering strictly to the base spec.
+          const EXCHANGE_RATE = 92.74; 
+          const isSwitchingToUSD = newCurrency === "USD";
+          
+          // If switching to USD, we divide. If switching to INR, we multiply.
+          const conversionFactor = isSwitchingToUSD ? (1 / EXCHANGE_RATE) : EXCHANGE_RATE;
+
+          // 1. Convert all transactions
+          const updatedTransactions = state.transactions.map((t) => ({
+            ...t,
+            amount: t.amount * conversionFactor,
+          }));
+
+          // 2. Convert all monthly budgets
+          const updatedMonthlyBudgets: Record<string, number> = {};
+          Object.keys(state.monthlyBudgets).forEach((monthKey) => {
+            updatedMonthlyBudgets[monthKey] = state.monthlyBudgets[monthKey] * conversionFactor;
+          });
+
+          return {
+            currency: newCurrency,
+            transactions: updatedTransactions,
+            monthlyBudgets: updatedMonthlyBudgets,
+            // 3. Convert legacy budget limit (Maintains Backward Compatibility)
+            budgetLimit: state.budgetLimit * conversionFactor,
+          };
+        }),      
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === "light" ? "dark" : "light",

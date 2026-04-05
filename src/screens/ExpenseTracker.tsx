@@ -21,6 +21,7 @@ const ExpenseTracker = () => {
   const transactions = useFinanceStore((state) => state.transactions);
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
+  const currency = useFinanceStore((state) => state.currency);
 
   // 1. Filter transactions for the current month ONLY (Aligns with Dashboard/Budget)
   const monthlyTransactions = useMemo(() => {
@@ -80,7 +81,8 @@ const ExpenseTracker = () => {
           <ChevronLeft color={colors.textMain} size={24} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textMain }]}>
-          Expense Tracker
+          Expense Tracker (
+          {new Date().toLocaleDateString("en-US", { month: "long" })})
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -96,6 +98,7 @@ const ExpenseTracker = () => {
               data={chartData}
               innerRadius={80}
               radius={120}
+              innerCircleColor={colors.background}
               centerLabelComponent={() => {
                 return (
                   <View style={styles.centerLabel}>
@@ -114,7 +117,7 @@ const ExpenseTracker = () => {
                       ]}
                     >
                       {/* Updated to use monthly total */}
-                      {formatCurrency(totalMonthlyExpenses)}
+                      {formatCurrency(totalMonthlyExpenses, currency)}
                     </Text>
                   </View>
                 );
@@ -178,7 +181,7 @@ const ExpenseTracker = () => {
                 </View>
 
                 <Text style={[styles.amountText, { color: colors.textMain }]}>
-                  {formatCurrency(item.value)}
+                  {formatCurrency(item.value, currency)}
                 </Text>
               </View>
             );
