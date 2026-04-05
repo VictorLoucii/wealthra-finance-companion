@@ -13,12 +13,19 @@ export interface Transaction {
 }
 
 interface FinanceStore {
+  // --- New Settings State ---
+  currency: "USD" | "INR";
+  setCurrency: (currency: "USD" | "INR") => void;
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+  // --------------------------
+
   transactions: Transaction[];
   selectedDate: string;
   setSelectedDate: (date: Date) => void;
   monthlyBudgets: Record<string, number>; // Map of 'YYYY-MM' -> amount
   budgetLimit: number; // Kept for Backward Compatibility
-  lastUsedType?: "income" | "expense"; 
+  lastUsedType?: "income" | "expense";
   setMonthlyBudget: (monthKey: string, limit: number) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   editTransaction: (
@@ -37,9 +44,20 @@ interface FinanceStore {
 export const useFinanceStore = create<FinanceStore>()(
   persist(
     (set, get) => ({
+      // --- Settings Default State ---
+      currency: "INR", // Backward Compatibility: defaults to USD
+      theme: "light", // Backward Compatibility: defaults to light mode
+
+      setCurrency: (currency) => set({ currency }),
+      toggleTheme: () =>
+        set((state) => ({
+          theme: state.theme === "light" ? "dark" : "light",
+        })),
+      // ------------------------------
+
       transactions: [],
-      budgetLimit: 0, 
-      selectedDate: new Date().toISOString(), 
+      budgetLimit: 0,
+      selectedDate: new Date().toISOString(),
       monthlyBudgets: {},
       lastUsedType: "income",
 
@@ -49,9 +67,9 @@ export const useFinanceStore = create<FinanceStore>()(
       // Fixes "Budget Leakage": Uses monthKey (YYYY-MM) to isolate budget values
       setMonthlyBudget: (monthKey, limit) =>
         set((state) => ({
-          monthlyBudgets: { 
-            ...state.monthlyBudgets, 
-            [monthKey]: limit 
+          monthlyBudgets: {
+            ...state.monthlyBudgets,
+            [monthKey]: limit,
           },
         })),
 

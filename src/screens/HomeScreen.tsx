@@ -10,7 +10,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { Bell, Wallet, PieChart, ArrowRightLeft } from "lucide-react-native";
+import {
+  Moon,
+  Sun,
+  Wallet,
+  PieChart,
+  ArrowRightLeft,
+} from "lucide-react-native";
 import { AddTransactionModal } from "../components/AddTransactionModal";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
@@ -22,6 +28,12 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
   const balance = useFinanceStore((state) => state.getBalance());
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
+
+  // Settings State
+  const currency = useFinanceStore((state) => state.currency);
+  const setCurrency = useFinanceStore((state) => state.setCurrency);
+  const theme = useFinanceStore((state) => state.theme);
+  const toggleTheme = useFinanceStore((state) => state.toggleTheme);
 
   // Fixes "Sticky Date": Listen to the global selected date
   const selectedDateStr = useFinanceStore((state) => state.selectedDate);
@@ -98,14 +110,43 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
         </View>
 
         <View style={styles.headerRightControls}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Bell size={22} color="#303960" />
-            <View style={styles.notificationDot} />
+          {/* Currency Toggle */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setCurrency(currency === "USD" ? "INR" : "USD")}
+          >
+            <View
+              style={[
+                styles.balanceChip,
+                {
+                  backgroundColor: "#FFFFFF",
+                  borderWidth: 1,
+                  borderColor: "#E2E8F0",
+                },
+              ]}
+            >
+              <Text
+                style={[styles.balanceText, { color: "#303960", fontSize: 14 }]}
+              >
+                {currency}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Theme Toggle */}
+          <TouchableOpacity style={styles.iconButton} onPress={toggleTheme}>
+            {theme === "dark" ? (
+              <Moon size={22} color="#303960" />
+            ) : (
+              <Sun size={22} color="#303960" />
+            )}
           </TouchableOpacity>
 
           <View style={styles.balanceChip}>
             <Wallet size={14} color="#FFFFFF" style={styles.balanceIcon} />
-            <Text style={styles.balanceText}>{formatCurrency(balance)}</Text>
+            <Text style={styles.balanceText}>
+              {formatCurrency(balance, currency)}
+            </Text>
           </View>
         </View>
       </View>
@@ -125,7 +166,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
 
             if (item.name === "Budget") {
               if (currentMonthBudget > 0) {
-                displayValue = `${formatCurrency(monthlyExpenses)} / ${formatCurrency(currentMonthBudget)}`;
+                displayValue = `${formatCurrency(monthlyExpenses, currency)} / ${formatCurrency(currentMonthBudget, currency)}`;
                 displayPercentage = Math.round(
                   (monthlyExpenses / currentMonthBudget) * 100,
                 );
@@ -136,10 +177,10 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                       ? "#FF3B30"
                       : "#FF9500";
               } else {
-                displayValue = formatCurrency(monthlyExpenses);
+                displayValue = formatCurrency(monthlyExpenses, currency);
               }
             } else if (item.name === "Transactions") {
-              displayValue = formatCurrency(monthlyIncome);
+              displayValue = formatCurrency(monthlyIncome, currency);
             }
 
             return (

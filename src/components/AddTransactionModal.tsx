@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import { X, Plus, Minus } from "lucide-react-native";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore"; // Imported Transaction type
@@ -35,6 +36,33 @@ export const AddTransactionModal = ({
   const [category, setCategory] = useState("General");
   const [notes, setNotes] = useState("");
   const [type, setType] = useState<"income" | "expense">("income");
+
+  const [keyboardPadding, setKeyboardPadding] = useState(0);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        if (Platform.OS === "android") {
+          setKeyboardPadding(e.endCoordinates.height);
+        }
+      },
+    );
+
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        if (Platform.OS === "android") {
+          setKeyboardPadding(0);
+        }
+      },
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // Sync state when editingTransaction changes or modal opens
   useEffect(() => {
@@ -98,7 +126,15 @@ export const AddTransactionModal = ({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.overlay}
       >
-        <View style={styles.modalContent}>
+        <View
+          style={[
+            styles.modalContent,
+            {
+              paddingBottom:
+                Platform.OS === "android" ? keyboardPadding + 40 : 40,
+            },
+          ]}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>
               {editingTransaction ? "Edit Transaction" : "New Transaction"}

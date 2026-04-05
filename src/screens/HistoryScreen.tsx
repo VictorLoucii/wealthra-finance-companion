@@ -217,11 +217,12 @@ const styles = StyleSheet.create({
   chipText: { color: "#303960", fontWeight: "600" },
   activeChipText: { color: "#FFFFFF" },
   listContent: { paddingHorizontal: 24, paddingBottom: 40 },
-  emptyState: {
+emptyState: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start", 
     alignItems: "center",
-    padding: 40,
+    paddingTop: 80, 
+    paddingHorizontal: 40,
   },
   emptyStateText: { color: "#94A3B8", textAlign: "center", fontSize: 16 },
   searchContainer: {
