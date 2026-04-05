@@ -10,12 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import {
-  Bell,
-  Wallet,
-  PieChart,
-  ArrowRightLeft,
-} from "lucide-react-native";
+import { Bell, Wallet, PieChart, ArrowRightLeft } from "lucide-react-native";
 import { AddTransactionModal } from "../components/AddTransactionModal";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
@@ -27,10 +22,10 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
   const balance = useFinanceStore((state) => state.getBalance());
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
-  
+
   // Fixes "Sticky Date": Listen to the global selected date
   const selectedDateStr = useFinanceStore((state) => state.selectedDate);
-  
+
   // 2. Derive Current Context
   const selectedDate = useMemo(
     () => new Date(selectedDateStr),
@@ -42,9 +37,11 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const currentMonthBudget = monthlyBudgets[monthKey] ?? 0;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
   const [selectedMainItem, setSelectedMainItem] = useState("Budget");
-  const [selectedBudgetItem, setSelectedBudgetItem] = useState("Expense Tracker");
+  const [selectedBudgetItem, setSelectedBudgetItem] =
+    useState("Expense Tracker");
 
   // 3. Calculate Monthly Stats based on Global selectedDate
   const { monthlyExpenses, monthlyIncome } = useMemo(() => {
@@ -106,10 +103,10 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
             <View style={styles.notificationDot} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.balanceChip}>
+          <View style={styles.balanceChip}>
             <Wallet size={14} color="#FFFFFF" style={styles.balanceIcon} />
             <Text style={styles.balanceText}>{formatCurrency(balance)}</Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 

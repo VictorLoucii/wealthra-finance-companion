@@ -1,42 +1,45 @@
 
-***
+
+---
 
 # 📂 Project: Wealthra Finance Companion
+[cite_start]**Sub-title**: *A Lightweight Personal Finance Companion for Zorvyn FinTech* [cite: 41]
 
 ### 📝 Project Overview
-[cite_start]Wealthra is a lightweight, mobile-first finance tracker designed to help users understand their daily money habits through simplicity and structured data[cite: 41, 43]. [cite_start]Unlike complex banking apps, Wealthra focuses on personal engagement, snappy interactions, and ease of use for regular everyday tracking[cite: 42, 44].
+[cite_start]Wealthra is a mobile-first finance tracker designed to turn abstract spending into actionable daily habits[cite: 41, 43]. [cite_start]Moving away from the clutter of traditional banking apps, Wealthra focuses on a "high-frequency" user experience—making it effortless to log, track, and understand money in real-time[cite: 42, 44].
 
 ---
 
-### 🚀 Features
-* [cite_start]**Command Center Dashboard**: A real-time overview of balance, total income, and monthly expenses, structured in a clean, touch-friendly grid[cite: 53, 54, 55, 56].
-* [cite_start]**Advanced Transaction Engine**: Full CRUD support (Create, Read, Update, Delete) with dedicated validation to ensure data integrity[cite: 72, 73, 74, 75, 76, 111].
-* [cite_start]**Smart Budget Alerts**: A dynamic budget limit tracker that provides immediate visual feedback, shifting colors when spending crosses a critical threshold[cite: 88, 90].
-* [cite_start]**High-Performance History**: Real-time, case-insensitive search and category filtering, optimized for handling large datasets[cite: 80, 82].
-* [cite_start]**Visual Insights**: Category-wise breakdowns and visualizations to help users understand spending patterns on a small screen[cite: 58, 61, 93, 99].
+### 🚀 Core Requirements & Features
+* [cite_start]**Command Center Dashboard**: An informative, non-crowded overview featuring **Global Balance**, **Monthly Income**, and **Monthly Expenses**[cite: 50, 53, 54, 55, 56, 63].
+* [cite_start]**Dynamic "Time-Travel" Tracker**: A sophisticated month-to-month navigation system that updates all dashboard metrics, charts, and transaction lists based on the selected month[cite: 98, 110, 153].
+* [cite_start]**Advanced Transaction Engine**: Full CRUD support (Create, Read, Update, Delete) with a unified modal-driven input flow[cite: 65, 73, 74, 75, 76].
+* [cite_start]**Insights Screen (Expense Tracker)**: A dedicated section providing a **Category Breakdown** and identifying the **Highest Spending Category** via a dynamic doughnut chart[cite: 93, 94, 96, 99].
+* [cite_start]**Goal Feature: Smart Budgeting**: A budget limit tracker that provides immediate visual feedback through a "Traffic Light" progress system[cite: 83, 88, 90, 92].
+* [cite_start]**High-Performance Search**: Real-time, case-insensitive transaction filtering with dedicated **Empty States** for missing data[cite: 80, 113].
 
 ---
 
-### 🛠️ Tech Stack
-* [cite_start]**Framework**: React Native with Expo SDK 54 (TypeScript)[cite: 34, 36].
-* [cite_start]**State Management**: Zustand with `AsyncStorage` persistence for a reliable, offline-first experience[cite: 131, 135, 145, 167].
-* [cite_start]**List Optimization**: `@shopify/flash-list` for high-performance scrolling in the History screen[cite: 132].
-* [cite_start]**Architecture**: Component-driven architecture with a clear separation between business logic and UI components[cite: 130, 133].
+### 🛠️ Tech Stack & Architecture
+* [cite_start]**Framework**: React Native (Expo SDK 54) with **TypeScript** for type-safe financial logic[cite: 34, 35, 36].
+* [cite_start]**State Management**: **Zustand** with persistent middleware for a robust, offline-first experience[cite: 131, 135, 145, 167].
+* [cite_start]**Data Handling**: Utilizes a `monthKey` mapping strategy (`YYYY-MM`) to isolate budgets and transactions, preventing data leakage across months[cite: 119, 126, 162].
+* [cite_start]**UI/UX Components**: `@shopify/flash-list` for buttery-smooth scrolling and **Lucide Icons** for a clean, professional aesthetic[cite: 130, 132, 155].
 
 ---
 
-### 💡 Product Thinking & Assumptions
-[cite_start]The assignment allows for "sensible decisions" and prioritizes a "well-finished app" over unnecessary complexity[cite: 28, 29, 30]. Key choices for Wealthra include:
+### 💡 Product Thinking & Design Assumptions
+[cite_start]In alignment with the assignment’s focus on "Reasonable Assumptions" and "Polish over Complexity," Wealthra implements several specific design choices[cite: 28, 29, 30]:
 
-1.  [cite_start]**Functional Integrity First**: I deliberately chose to omit "placeholder" features to ensure a 100% functional navigation flow[cite: 30]. [cite_start]Every interactive element on the dashboard drives a complete, working feature[cite: 110, 153].
-2.  [cite_start]**Proactive Spending Alerts**: For the Budget Goal feature, the progress bar triggers a visual color shift at 90% capacity[cite: 90, 92]. [cite_start]This allows users to adjust their habits *before* they exceed their limit[cite: 153].
-3.  [cite_start]**Data Integrity via UX**: To prevent ambiguous entries, the "Notes" field is mandatory when the "General" category is selected[cite: 111]. [cite_start]Additionally, regex-based filtering blocks non-numeric characters in the amount field to reduce user error[cite: 111].
-4.  [cite_start]**Local-First Design**: The app utilizes persistent local storage to ensure financial data is always available, even without an active internet connection[cite: 121, 145].
+1.  [cite_start]**The "Global Wallet" Logic**: While the budget and transactions "time-travel" per month, the top-right **Balance Chip** remains a global sum[cite: 54, 153]. This provides the user with an immutable "Ground Truth" of their actual cash-on-hand regardless of which historical month they are viewing.
+2.  [cite_start]**Traffic Light Budgeting**: To drive habit change, the budget progress bar shifts colors: **Green** (Healthy), **Orange** (Warning @ 70%), and **Red** (Critical @ 90%)[cite: 90, 92]. [cite_start]This nudges users toward smarter spending *before* they exceed their goals[cite: 153].
+3.  [cite_start]**Validated Interaction**: To ensure data reliability, amount fields are numeric-restricted, and categories are pre-selected to maintain clean insights for the doughnut chart[cite: 111, 116].
+4.  [cite_start]**Zero-Friction Navigation**: Tapping a dashboard metric (like "Transactions") automatically triggers the relevant action (opening the Add Modal), reducing the "taps-to-task" ratio[cite: 110, 155].
 
 ---
 
 ### ⚙️ Setup Instructions
-[cite_start]To run this project locally, ensure you have Node.js and the Expo CLI installed[cite: 171].
+[cite_start]Follow these steps to evaluate the application on your local machine or physical device[cite: 171, 188]:
 
 ```bash
 # 1. Clone the repository
@@ -46,18 +49,17 @@ cd wealthra-finance-companion
 # 2. Install dependencies
 npm install
 
-# 3. Start the Expo development server
+# 3. Start the project
 npx expo start
 ```
-*Press `i` for the iOS Simulator, `a` for Android, or scan the QR code with the Expo Go app on a physical device.*
+[cite_start]*Note: Using the **Expo Go** app on a physical device is recommended to experience the touch-friendly interactions and responsiveness firsthand[cite: 116, 168, 169].*
 
 ---
 
-### 🛠️ Future Enhancements
-[cite_start]Given more time, I would expand the product with the following improvements[cite: 139, 141]:
-* [cite_start]**Dark Mode**: For improved accessibility and user preference[cite: 142].
-* [cite_start]**Data Export**: Allowing users to export their financial history as a CSV or PDF file[cite: 146].
-* [cite_start]**Biometric Lock**: Adding an extra layer of security for sensitive financial data[cite: 148].
-* [cite_start]**Investment Overview**: Expanding the dashboard to include long-term investment tracking[cite: 150].
+### 🛠️ Future Roadmap
+[cite_start]Meaningful enhancements planned for future iterations[cite: 139, 141, 150]:
+* [cite_start]**Biometric Lock**: Securing financial data via FaceID/TouchID[cite: 148].
+* [cite_start]**Dark Mode Support**: Implementing a system-wide theme toggle[cite: 142].
+* [cite_start]**Data Export**: CSV/PDF generation for tax and personal records[cite: 146].
 
 ---
