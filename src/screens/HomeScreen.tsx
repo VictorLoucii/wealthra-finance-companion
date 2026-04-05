@@ -21,8 +21,11 @@ import { AddTransactionModal } from "../components/AddTransactionModal";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { TransactionItem } from "../components/TransactionItem";
+import { COLORS } from "../constants/color";
 
 const HomeScreen = ({ navigation }: { navigation?: any }) => {
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
   // 1. Store Selectors
   const transactions = useFinanceStore((state) => state.transactions);
   const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
@@ -32,7 +35,6 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   // Settings State
   const currency = useFinanceStore((state) => state.currency);
   const setCurrency = useFinanceStore((state) => state.setCurrency);
-  const theme = useFinanceStore((state) => state.theme);
   const toggleTheme = useFinanceStore((state) => state.toggleTheme);
 
   // Fixes "Sticky Date": Listen to the global selected date
@@ -91,12 +93,14 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
 
       <View style={styles.header}>
         <View style={styles.headerLeftGroup}>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.textMain }]}>
             {selectedDate.toLocaleDateString("en-US", { month: "long" })}
           </Text>
           <View style={styles.profileSection}>
@@ -119,14 +123,17 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
               style={[
                 styles.balanceChip,
                 {
-                  backgroundColor: "#FFFFFF",
+                  backgroundColor: colors.cardBackground,
                   borderWidth: 1,
-                  borderColor: "#E2E8F0",
+                  borderColor: colors.border,
                 },
               ]}
             >
               <Text
-                style={[styles.balanceText, { color: "#303960", fontSize: 14 }]}
+                style={[
+                  styles.balanceText,
+                  { color: colors.textMain, fontSize: 14 },
+                ]}
               >
                 {currency}
               </Text>
@@ -136,9 +143,9 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           {/* Theme Toggle */}
           <TouchableOpacity style={styles.iconButton} onPress={toggleTheme}>
             {theme === "dark" ? (
-              <Moon size={22} color="#303960" />
+              <Moon size={22} color={colors.textMain} />
             ) : (
-              <Sun size={22} color="#303960" />
+              <Sun size={22} color={colors.textMain} />
             )}
           </TouchableOpacity>
 
@@ -187,7 +194,11 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
               <TouchableOpacity
                 key={item.name}
                 activeOpacity={0.7}
-                style={[styles.gridCard, isActive && styles.gridCardActive]}
+                style={[
+                  styles.gridCard,
+                  { backgroundColor: colors.cardBackground },
+                  isActive && styles.gridCardActive,
+                ]}
                 onPress={() => {
                   setSelectedMainItem(item.name);
                   if (item.name === "Budget")
@@ -197,12 +208,13 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
               >
                 <Icon
                   size={28}
-                  color={isActive ? "#FFFFFF" : "#303960"}
+                  color={isActive ? "#FFFFFF" : colors.textMain}
                   strokeWidth={2}
                 />
                 <Text
                   style={[
                     styles.gridCardText,
+                    { color: colors.textMain },
                     isActive && styles.gridCardTextActive,
                   ]}
                 >
@@ -213,6 +225,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                   <Text
                     style={[
                       styles.gridValueText,
+                      { color: colors.textSecondary },
                       isActive && styles.gridValueActive,
                     ]}
                   >
@@ -263,7 +276,9 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           })}
         </View>
 
-        <Text style={styles.sectionTitle}>Budgeting</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMain }]}>
+          Budgeting
+        </Text>
         <View style={styles.budgetingList}>
           {["Expense Tracker", "Budget Planning"].map((item) => (
             <TouchableOpacity
@@ -271,6 +286,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
               activeOpacity={0.8}
               style={[
                 styles.budgetingCard,
+                { backgroundColor: colors.cardBackground },
                 selectedBudgetItem === item && styles.budgetingCardActive,
               ]}
               onPress={() => {
@@ -285,6 +301,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
               <Text
                 style={[
                   styles.budgetingCardText,
+                  { color: colors.textMain },
                   selectedBudgetItem === item && styles.budgetingCardTextActive,
                 ]}
               >
@@ -296,7 +313,9 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
 
         <View style={{ marginTop: 32 }}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMain }]}>
+              Recent Transactions
+            </Text>
             <TouchableOpacity onPress={() => navigation?.navigate("History")}>
               <Text style={styles.seeAllText}>View All</Text>
             </TouchableOpacity>

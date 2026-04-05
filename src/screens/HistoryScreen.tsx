@@ -12,9 +12,12 @@ import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TransactionItem } from "../components/TransactionItem";
 import { ChevronLeft, Trash2, Search, X } from "lucide-react-native";
-import { AddTransactionModal } from "../components/AddTransactionModal"; // NEW: Imported Modal
+import { AddTransactionModal } from "../components/AddTransactionModal";
+import { COLORS } from "../constants/color";
 
 const HistoryScreen = ({ navigation }: { navigation?: any }) => {
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
   const filters: Array<"All" | "income" | "expense"> = [
     "All",
     "income",
@@ -29,7 +32,8 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
 
   // NEW: State for Edit Flow
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   // NEW: Handlers for Edit Flow
   const handleOpenEdit = (item: Transaction) => {
@@ -60,22 +64,18 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
 
   // UPDATED: Replaced simple Delete with the dual Action Sheet from HomeScreen
   const handleItemPress = (item: Transaction) => {
-    Alert.alert(
-      "Transaction Options",
-      "What would you like to do?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Edit",
-          onPress: () => handleOpenEdit(item),
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deleteTransaction(item.id),
-        },
-      ],
-    );
+    Alert.alert("Transaction Options", "What would you like to do?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Edit",
+        onPress: () => handleOpenEdit(item),
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => deleteTransaction(item.id),
+      },
+    ]);
   };
 
   const filteredData = useMemo(() => {
@@ -104,12 +104,16 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
   }, [transactions, activeFilter, searchQuery]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation?.goBack()}>
-          <ChevronLeft color="#303960" size={28} />
+          <ChevronLeft color={colors.textMain} size={28} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>History</Text>
+        <Text style={[styles.headerTitle, { color: colors.textMain }]}>
+          History
+        </Text>
         <TouchableOpacity
           onPress={handleClearAll}
           disabled={transactions.length === 0}
@@ -118,12 +122,17 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           <Trash2 color="#EF4444" size={24} />
         </TouchableOpacity>
       </View>
-      <View style={styles.searchContainer}>
-        <Search color="#94A3B8" size={20} />
+      <View
+        style={[
+          styles.searchContainer,
+          { backgroundColor: colors.cardBackground },
+        ]}
+      >
+        <Search color={colors.textSecondary} size={20} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.textMain }]}
           placeholder="Search transactions..."
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -132,7 +141,7 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
             onPress={() => setSearchQuery("")}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <X color="#94A3B8" size={20} />
+            <X color={colors.textSecondary} size={20} />
           </TouchableOpacity>
         )}
       </View>
@@ -142,11 +151,16 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           <TouchableOpacity
             key={type}
             onPress={() => setActiveFilter(type)}
-            style={[styles.chip, activeFilter === type && styles.activeChip]}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.cardBackground },
+              activeFilter === type && styles.activeChip,
+            ]}
           >
             <Text
               style={[
                 styles.chipText,
+                { color: colors.textSecondary },
                 activeFilter === type && styles.activeChipText,
               ]}
             >
@@ -158,7 +172,9 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
 
       {filteredData.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>
+          <Text
+            style={[styles.emptyStateText, { color: colors.textSecondary }]}
+          >
             No transactions found for this filter.
           </Text>
         </View>
@@ -167,7 +183,10 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           <FlashList<Transaction>
             data={filteredData}
             renderItem={({ item }) => (
-              <TransactionItem item={item} onPress={() => handleItemPress(item)} /> // UPDATED trigger
+              <TransactionItem
+                item={item}
+                onPress={() => handleItemPress(item)}
+              />
             )}
             estimatedItemSize={70}
             contentContainerStyle={styles.listContent}
@@ -217,11 +236,11 @@ const styles = StyleSheet.create({
   chipText: { color: "#303960", fontWeight: "600" },
   activeChipText: { color: "#FFFFFF" },
   listContent: { paddingHorizontal: 24, paddingBottom: 40 },
-emptyState: {
+  emptyState: {
     flex: 1,
-    justifyContent: "flex-start", 
+    justifyContent: "flex-start",
     alignItems: "center",
-    paddingTop: 80, 
+    paddingTop: 80,
     paddingHorizontal: 40,
   },
   emptyStateText: { color: "#94A3B8", textAlign: "center", fontSize: 16 },

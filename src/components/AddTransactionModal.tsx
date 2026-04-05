@@ -14,6 +14,7 @@ import {
 import { X, Plus, Minus } from "lucide-react-native";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore"; // Imported Transaction type
 import { CATEGORIES } from "../constants/categories";
+import { COLORS } from "../constants/color";
 
 interface Props {
   isVisible: boolean;
@@ -26,6 +27,8 @@ export const AddTransactionModal = ({
   onClose,
   editingTransaction,
 }: Props) => {
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
   const addTransaction = useFinanceStore((state) => state.addTransaction);
   const editTransaction = useFinanceStore((state) => state.editTransaction);
   const lastUsedType =
@@ -124,7 +127,7 @@ export const AddTransactionModal = ({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.overlay}
+        style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}
       >
         <View
           style={[
@@ -132,23 +135,29 @@ export const AddTransactionModal = ({
             {
               paddingBottom:
                 Platform.OS === "android" ? keyboardPadding + 40 : 40,
+              backgroundColor: colors.cardBackground,
             },
           ]}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>
+            <Text style={[styles.title, { color: colors.textMain }]}>
               {editingTransaction ? "Edit Transaction" : "New Transaction"}
             </Text>
 
             <TouchableOpacity onPress={onClose}>
-              <X color="#303960" size={24} />
+              <X color={colors.textMain} size={24} />
             </TouchableOpacity>
           </View>
 
-          {showNoteHint && (
-            <View style={styles.hintContainer}>
-              <Text style={styles.hintText}>
-                Please select a category or add a note to save
+{showNoteHint && (
+            <View
+              style={[
+                styles.hintContainer,
+                { backgroundColor: colors.divider },
+              ]}
+            >
+              <Text style={[styles.hintText, { color: "#EF4444" }]}> {/* Changed color */}
+                Please select a category or add a note to save! {/* Added exclamation */}
               </Text>
             </View>
           )}
@@ -157,9 +166,8 @@ export const AddTransactionModal = ({
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                type === "expense"
-                  ? styles.activeExpense
-                  : { borderColor: "#FEE2E2", opacity: 0.6 },
+                { borderColor: colors.border },
+                type === "expense" ? styles.activeExpense : { opacity: 0.6 },
               ]}
               onPress={() => setType("expense")}
             >
@@ -170,6 +178,7 @@ export const AddTransactionModal = ({
               <Text
                 style={[
                   styles.toggleText,
+                  { color: colors.textSecondary },
                   type === "expense" && styles.activeText,
                 ]}
               >
@@ -180,9 +189,8 @@ export const AddTransactionModal = ({
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                type === "income"
-                  ? styles.activeIncome
-                  : { borderColor: "#DCFCE7", opacity: 0.6 },
+                { borderColor: colors.border },
+                type === "income" ? styles.activeIncome : { opacity: 0.6 },
               ]}
               onPress={() => setType("income")}
             >
@@ -199,15 +207,17 @@ export const AddTransactionModal = ({
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Amount</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Amount
+            </Text>
             <TextInput
-              style={styles.amountInput}
+              style={[styles.amountInput, { color: colors.textMain }]}
               placeholder="0.00"
               keyboardType="decimal-pad"
               value={amount}
               onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
               autoFocus={!editingTransaction} // Only auto-focus on new entries
-              placeholderTextColor="#CBD5E1"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
@@ -231,6 +241,10 @@ export const AddTransactionModal = ({
                     }
                     style={[
                       styles.categoryChip,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                      },
                       isSelected && {
                         backgroundColor: cat.color + "20",
                         borderColor: cat.color,
@@ -239,12 +253,13 @@ export const AddTransactionModal = ({
                   >
                     <Icon
                       size={18}
-                      color={isSelected ? cat.color : "#94A3B8"}
+                      color={isSelected ? cat.color : colors.textSecondary}
                       style={styles.categoryIcon}
                     />
                     <Text
                       style={[
                         styles.categoryText,
+                        { color: colors.textSecondary },
                         isSelected && { color: cat.color, fontWeight: "700" },
                       ]}
                     >
@@ -261,11 +276,14 @@ export const AddTransactionModal = ({
               Note / Description {!isCategorySelected && "(Required)"}
             </Text>
             <TextInput
-              style={styles.notesInput}
+              style={[
+                styles.notesInput,
+                { color: colors.textMain, borderBottomColor: colors.border },
+              ]}
               placeholder="What was this for?"
               value={notes}
               onChangeText={setNotes}
-              placeholderTextColor="#CBD5E1"
+              placeholderTextColor={colors.textSecondary}
               maxLength={50}
             />
           </View>
@@ -273,6 +291,7 @@ export const AddTransactionModal = ({
           <TouchableOpacity
             style={[
               styles.saveButton,
+              { backgroundColor: colors.primaryButton },
               !isFormValid && { backgroundColor: "#CBD5E1", elevation: 0 },
             ]}
             onPress={handleSave}

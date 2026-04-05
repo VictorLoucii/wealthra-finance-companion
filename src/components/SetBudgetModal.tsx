@@ -10,6 +10,8 @@ import {
   Platform,
 } from "react-native";
 import { Alert } from "react-native";
+import { useFinanceStore } from "../store/useFinanceStore";
+import { COLORS } from "../constants/color";
 
 interface SetBudgetModalProps {
   isVisible: boolean;
@@ -25,6 +27,8 @@ export const SetBudgetModal = ({
   currentLimit,
 }: SetBudgetModalProps) => {
   const [value, setValue] = useState("");
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
 
   // Sync internal state when modal opens
   useEffect(() => {
@@ -56,19 +60,31 @@ export const SetBudgetModal = ({
 
   return (
     <Modal visible={isVisible} animationType="fade" transparent>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.container}
         >
-          <View style={styles.content}>
-            <Text style={styles.title}>Set Monthly Budget</Text>
-            <Text style={styles.subtitle}>
+          <View
+            style={[styles.content, { backgroundColor: colors.cardBackground }]}
+          >
+            <Text style={[styles.title, { color: colors.textMain }]}>
+              Set Monthly Budget
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               How much do you plan to spend this month?
             </Text>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.inputBackground,
+                  color: colors.textMain,
+                  borderColor: colors.border,
+                },
+              ]}
+              placeholderTextColor={colors.textSecondary}
               placeholder="e.g. 2000"
               keyboardType="decimal-pad" // Better UX for numbers
               value={value}
@@ -79,7 +95,14 @@ export const SetBudgetModal = ({
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.saveButton, !value && { opacity: 0.5 }]}

@@ -15,12 +15,15 @@ import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { SetBudgetModal } from "../components/SetBudgetModal";
 import { Wallet, Banknote, ChevronLeft } from "lucide-react-native";
-import { TransactionItem } from "../components/TransactionItem"; 
+import { TransactionItem } from "../components/TransactionItem";
 import { AddTransactionModal } from "../components/AddTransactionModal";
+import { COLORS } from "../constants/color";
 
 const { width } = Dimensions.get("window");
 
 const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
   // 1. Pull Global State & Actions
   const transactions = useFinanceStore((state) => state.transactions);
   const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
@@ -30,15 +33,20 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
 
   // 2. Synchronize Local Date with Global Store
-  const currentDate = useMemo(() => new Date(selectedDateStr), [selectedDateStr]);
-  
+  const currentDate = useMemo(
+    () => new Date(selectedDateStr),
+    [selectedDateStr],
+  );
+
   // 3. Derive Month Key and Specific Budget
   const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
   const budgetLimit = monthlyBudgets[monthKey] ?? 0;
 
   const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
-  const [isTransactionModalVisible, setIsTransactionModalVisible] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isTransactionModalVisible, setIsTransactionModalVisible] =
+    useState(false);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   const handleOpenEdit = (item: Transaction) => {
     setEditingTransaction(item);
@@ -55,13 +63,21 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
     const newDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth() + offset,
-      1
+      1,
     );
     setSelectedDate(newDate);
   };
 
-  const prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-  const nextDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  const prevDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() - 1,
+    1,
+  );
+  const nextDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    1,
+  );
 
   const currentMonthYear = currentDate.toLocaleDateString("en-US", {
     month: "long",
@@ -115,16 +131,18 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
 
   const budgetStatusColor =
     budgetLimit === 0 || displayPercentage < 70
-      ? "#66C2A9" 
+      ? "#66C2A9"
       : displayPercentage >= 90
-        ? "#FF3B30" 
-        : "#FF9500"; 
+        ? "#FF3B30"
+        : "#FF9500";
 
   const handleSetBudget = () => setIsBudgetModalVisible(true);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
 
       <View style={styles.header}>
         <View style={styles.headerLeftContainer}>
@@ -133,9 +151,11 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <ChevronLeft color="#303960" size={28} strokeWidth={2.5} />
+            <ChevronLeft color={colors.textMain} size={28} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Budget Planning</Text>
+          <Text style={[styles.headerTitle, { color: colors.textMain }]}>
+            Budget Planning
+          </Text>
         </View>
 
         <View style={styles.profileSection}>
@@ -145,20 +165,30 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
             }}
             style={styles.userAvatar}
           />
-          <Text style={styles.userName}>VICTOR</Text>
+          <Text style={[styles.userName, { color: colors.textMain }]}>
+            VICTOR
+          </Text>
         </View>
       </View>
 
-      <View style={styles.tabsContainer}>
+      <View
+        style={[styles.tabsContainer, { borderBottomColor: colors.border }]}
+      >
         <TouchableOpacity
           onPress={() => handleTabChange(-1)}
           activeOpacity={0.7}
         >
-          <Text style={styles.tabTextInactive}>{prevMonth}</Text>
+          <Text
+            style={[styles.tabTextInactive, { color: colors.textSecondary }]}
+          >
+            {prevMonth}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.activeTabContainer}>
-          <Text style={styles.tabTextActive}>{currentMonthYear}</Text>
+          <Text style={[styles.tabTextActive, { color: colors.textMain }]}>
+            {currentMonthYear}
+          </Text>
           <View style={styles.activeTabIndicator} />
         </View>
 
@@ -166,7 +196,11 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           onPress={() => handleTabChange(1)}
           activeOpacity={0.7}
         >
-          <Text style={styles.tabTextInactive}>{nextMonth}</Text>
+          <Text
+            style={[styles.tabTextInactive, { color: colors.textSecondary }]}
+          >
+            {nextMonth}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -194,7 +228,9 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
         </View>
       </View>
 
-      <View style={styles.budgetBox}>
+      <View
+        style={[styles.budgetBox, { backgroundColor: colors.cardBackground }]}
+      >
         <View style={styles.budgetBoxHeader}>
           <TouchableOpacity onPress={handleSetBudget}>
             <Text style={styles.budgetBoxTitle}>
@@ -210,17 +246,25 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           <Text
             style={[
               styles.budgetSpentText,
+              { color: colors.textMain },
               budgetLimit > 0 && { color: budgetStatusColor },
             ]}
           >
             {formatCurrency(monthlyExpenses)}
           </Text>
-          <Text style={styles.budgetLimitText}>
+          <Text style={[styles.budgetLimitText, { color: colors.textMain }]}>
+            {" "}
+            {/* Modify this */}
             {formatCurrency(budgetLimit)}
           </Text>
         </View>
 
-        <View style={styles.progressBarBackground}>
+        <View
+          style={[
+            styles.progressBarBackground,
+            { backgroundColor: colors.divider },
+          ]}
+        >
           <View
             style={[
               styles.progressBarFill,
@@ -251,7 +295,12 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
                   <View
                     style={{ marginBottom: 12, marginTop: index === 0 ? 0 : 8 }}
                   >
-                    <Text style={styles.transactionDateText}>
+                    <Text
+                      style={[
+                        styles.transactionDateText,
+                        { color: colors.textMain },
+                      ]}
+                    >
                       {new Date(item.date).toDateString() ===
                       new Date().toDateString()
                         ? "Today"
@@ -319,8 +368,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   backButton: {
-    marginLeft: -10, 
-    padding: 8, 
+    marginLeft: -10,
+    padding: 8,
   },
   headerTitle: {
     fontSize: 22,

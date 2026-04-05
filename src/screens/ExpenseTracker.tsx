@@ -14,10 +14,13 @@ import { PieChart } from "react-native-gifted-charts";
 import { useFinanceStore } from "../store/useFinanceStore";
 import { CATEGORIES } from "../constants/categories";
 import { formatCurrency } from "../utils/formatters";
+import { COLORS } from "../constants/color";
 
 const ExpenseTracker = () => {
   const navigation = useNavigation();
   const transactions = useFinanceStore((state) => state.transactions);
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
 
   // 1. Filter transactions for the current month ONLY (Aligns with Dashboard/Budget)
   const monthlyTransactions = useMemo(() => {
@@ -33,9 +36,10 @@ const ExpenseTracker = () => {
   }, [transactions]);
 
   // 2. Calculate the Total specifically for this month
-  const totalMonthlyExpenses = useMemo(() => 
-    monthlyTransactions.reduce((sum, t) => sum + t.amount, 0),
-  [monthlyTransactions]);
+  const totalMonthlyExpenses = useMemo(
+    () => monthlyTransactions.reduce((sum, t) => sum + t.amount, 0),
+    [monthlyTransactions],
+  );
 
   // 3. Group the monthly data for the chart
   const chartData = useMemo(() => {
@@ -62,15 +66,22 @@ const ExpenseTracker = () => {
   }, [monthlyTransactions]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[
+            styles.backButton,
+            { backgroundColor: colors.cardBackground },
+          ]}
           onPress={() => navigation.goBack()}
         >
-          <ChevronLeft color="#303960" size={24} />
+          <ChevronLeft color={colors.textMain} size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Expense Tracker</Text>
+        <Text style={[styles.headerTitle, { color: colors.textMain }]}>
+          Expense Tracker
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -88,8 +99,20 @@ const ExpenseTracker = () => {
               centerLabelComponent={() => {
                 return (
                   <View style={styles.centerLabel}>
-                    <Text style={styles.centerLabelText}>Total</Text>
-                    <Text style={styles.centerLabelAmount}>
+                    <Text
+                      style={[
+                        styles.centerLabelText,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Total
+                    </Text>
+                    <Text
+                      style={[
+                        styles.centerLabelAmount,
+                        { color: colors.textMain },
+                      ]}
+                    >
                       {/* Updated to use monthly total */}
                       {formatCurrency(totalMonthlyExpenses)}
                     </Text>
@@ -99,7 +122,9 @@ const ExpenseTracker = () => {
             />
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>
+              <Text
+                style={[styles.emptyStateText, { color: colors.textSecondary }]}
+              >
                 No expenses to track yet.
               </Text>
             </View>
@@ -107,7 +132,9 @@ const ExpenseTracker = () => {
         </View>
 
         <View style={styles.breakdownSection}>
-          <Text style={styles.sectionTitle}>Breakdown</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMain }]}>
+            Breakdown
+          </Text>
 
           {chartData.map((item, index) => {
             const Icon = item.icon;
@@ -118,7 +145,13 @@ const ExpenseTracker = () => {
                 : "0";
 
             return (
-              <View key={index} style={styles.breakdownCard}>
+              <View
+                key={index}
+                style={[
+                  styles.breakdownCard,
+                  { backgroundColor: colors.cardBackground },
+                ]}
+              >
                 <View
                   style={[
                     styles.iconWrapper,
@@ -129,11 +162,22 @@ const ExpenseTracker = () => {
                 </View>
 
                 <View style={styles.breakdownInfo}>
-                  <Text style={styles.categoryName}>{item.categoryName}</Text>
-                  <Text style={styles.percentageText}>{percentage}%</Text>
+                  <Text
+                    style={[styles.categoryName, { color: colors.textMain }]}
+                  >
+                    {item.categoryName}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.percentageText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {percentage}%
+                  </Text>
                 </View>
 
-                <Text style={styles.amountText}>
+                <Text style={[styles.amountText, { color: colors.textMain }]}>
                   {formatCurrency(item.value)}
                 </Text>
               </View>

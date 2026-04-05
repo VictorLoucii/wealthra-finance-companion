@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Transaction } from "../store/useFinanceStore";
+import { Transaction, useFinanceStore } from "../store/useFinanceStore";
 import { CATEGORIES } from "../constants/categories";
 import { formatCurrency } from "../utils/formatters";
+import { COLORS } from '../constants/color';
 
 interface TransactionItemProps {
   item: Transaction;
@@ -11,6 +12,8 @@ interface TransactionItemProps {
 }
 
 export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
+  const theme = useFinanceStore((state) => state.theme) || "light";
+  const colors = COLORS[theme];
   const categoryData =
     CATEGORIES.find((c) => c.name === item.category) || CATEGORIES[7]; // Default to 'General'
   const CategoryIcon = categoryData.icon;
@@ -19,7 +22,10 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={() => onPress?.(item.id)}
-      style={styles.transactionItem}
+      style={[
+        styles.transactionItem,
+        { backgroundColor: colors.cardBackground },
+      ]}
     >
       <View
         style={[
@@ -31,12 +37,15 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
       </View>
       <View style={{ flex: 1, marginLeft: 12 }}>
         {/* REQ: Display note if available, otherwise fallback to category */}
-        <Text style={styles.transCategory} numberOfLines={1}>
+        <Text
+          style={[styles.transCategory, { color: colors.textMain }]}
+          numberOfLines={1}
+        >
           {item.notes ? item.notes : item.category}
         </Text>
 
         {/* REQ: Keep date, but prepend category if the note took the primary spot */}
-        <Text style={styles.transDate}>
+        <Text style={[styles.transDate, { color: colors.textSecondary }]}>
           {item.notes ? `${item.category} • ` : ""}
           {new Date(item.date).toLocaleDateString()}
         </Text>
