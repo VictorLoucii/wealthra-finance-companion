@@ -57,25 +57,27 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const [selectedBudgetItem, setSelectedBudgetItem] =
     useState("Expense Tracker");
 
-  // 3. Calculate Monthly Stats based on Global selectedDate
-  const { monthlyExpenses, monthlyIncome } = useMemo(() => {
-    const currentMonthTransactions = transactions.filter((t) => {
-      const d = new Date(t.date);
-      return (
-        d.getMonth() === selectedDate.getMonth() &&
-        d.getFullYear() === selectedDate.getFullYear()
-      );
-    });
+  // Calculate Monthly Stats based on Global selectedDate
+  const { monthlyExpenses, monthlyIncome, currentMonthTransactions } =
+    useMemo(() => {
+      const filtered = transactions.filter((t) => {
+        const d = new Date(t.date);
+        return (
+          d.getMonth() === selectedDate.getMonth() &&
+          d.getFullYear() === selectedDate.getFullYear()
+        );
+      });
 
-    return {
-      monthlyExpenses: currentMonthTransactions
-        .filter((t) => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0),
-      monthlyIncome: currentMonthTransactions
-        .filter((t) => t.type === "income")
-        .reduce((sum, t) => sum + t.amount, 0),
-    };
-  }, [transactions, selectedDate]);
+      return {
+        currentMonthTransactions: filtered, // Add this line
+        monthlyExpenses: filtered
+          .filter((t) => t.type === "expense")
+          .reduce((sum, t) => sum + t.amount, 0),
+        monthlyIncome: filtered
+          .filter((t) => t.type === "income")
+          .reduce((sum, t) => sum + t.amount, 0),
+      };
+    }, [transactions, selectedDate]);
 
   const handleOpenEdit = (item: Transaction) => {
     setEditingTransaction(item);
@@ -311,9 +313,14 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           ))}
         </View>
 
-        <View style={{ marginTop: 32 }}>
+        <View style={{ marginTop: 40 }}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textMain }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.textMain, marginBottom: 0 },
+              ]}
+            >
               Recent Transactions (
               {selectedDate.toLocaleDateString("en-US", { month: "long" })})
             </Text>
@@ -322,13 +329,13 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
             </TouchableOpacity>
           </View>
 
-          {transactions.length === 0 ? (
+          {currentMonthTransactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>No transactions yet.</Text>
             </View>
           ) : (
             <View style={{ paddingBottom: 20 }}>
-              {transactions.slice(0, 5).map((item) => (
+              {currentMonthTransactions.slice(0, 5).map((item) => (
                 <TransactionItem
                   key={item.id}
                   item={item}

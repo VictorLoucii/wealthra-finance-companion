@@ -15,6 +15,7 @@ import { X, Plus, Minus } from "lucide-react-native";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore"; // Imported Transaction type
 import { CATEGORIES } from "../constants/categories";
 import { COLORS } from "../constants/color";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
   isVisible: boolean;
@@ -32,10 +33,13 @@ export const AddTransactionModal = ({
   const addTransaction = useFinanceStore((state) => state.addTransaction);
   const editTransaction = useFinanceStore((state) => state.editTransaction);
   const lastUsedType =
-    useFinanceStore((state) => state.lastUsedType) || "income"; // Fallback for backward compatibility
+    useFinanceStore((state) => state.lastUsedType) || "income";
   const setLastUsedType = useFinanceStore((state) => state.setLastUsedType);
 
+  const insets = useSafeAreaInsets();
+
   const [amount, setAmount] = useState("");
+
   const [category, setCategory] = useState("General");
   const [notes, setNotes] = useState("");
   const [type, setType] = useState<"income" | "expense">("income");
@@ -128,7 +132,19 @@ export const AddTransactionModal = ({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: colors.modalOverlay,
+            // Uses the device's safe top inset + a 10px buffer so it doesn't touch the very edge
+            paddingTop:
+              insets.top > 0
+                ? insets.top + 10
+                : Platform.OS === "android"
+                  ? 55
+                  : 60,
+          },
+        ]}
       >
         <View
           style={[
@@ -320,7 +336,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
-    paddingTop: Platform.OS === "android" ? 55 : 60, // Adds a safe ceiling below the status bar
+    // paddingTop: Platform.OS === "android" ? 55 : 60, // Adds a safe ceiling below the status bar
   },
   modalContent: {
     backgroundColor: "white",
