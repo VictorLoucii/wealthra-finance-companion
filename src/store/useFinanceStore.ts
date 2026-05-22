@@ -195,6 +195,10 @@ setCurrency: (newCurrency) =>
     {
       name: "finance-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => {
+        const { selectedDate, ...rest } = state;
+        return rest;
+      },
     },
   ),
 );
