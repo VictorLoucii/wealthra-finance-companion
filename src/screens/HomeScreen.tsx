@@ -18,10 +18,13 @@ import {
   ArrowRightLeft,
 } from "lucide-react-native";
 import { AddTransactionModal } from "../components/AddTransactionModal";
+import { SetWalletModal } from "../components/SetWalletModal";
+import { EditNameModal } from "../components/EditNameModal";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { TransactionItem } from "../components/TransactionItem";
 import { COLORS } from "../constants/color";
+import { CATEGORIES } from "../constants/categories";
 
 const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const theme = useFinanceStore((state) => state.theme) || "light";
@@ -31,6 +34,11 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const monthlyBudgets = useFinanceStore((state) => state.monthlyBudgets);
   const balance = useFinanceStore((state) => state.getBalance());
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
+  const setInitialBalance = useFinanceStore((state) => state.setInitialBalance);
+  const totalIncome = useFinanceStore((state) => state.getTotalIncome());
+  const totalExpenses = useFinanceStore((state) => state.getTotalExpenses());
+  const userName = useFinanceStore((state) => state.userName);
+  const setUserName = useFinanceStore((state) => state.setUserName);
 
   // Settings State
   const currency = useFinanceStore((state) => state.currency);
@@ -51,11 +59,18 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const currentMonthBudget = monthlyBudgets[monthKey] ?? 0;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isWalletModalVisible, setIsWalletModalVisible] = useState(false);
+  const [isEditNameModalVisible, setIsEditNameModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [selectedMainItem, setSelectedMainItem] = useState("Budget");
   const [selectedBudgetItem, setSelectedBudgetItem] =
     useState("Expense Tracker");
+
+  const handleSaveWallet = (targetWalletAmount: number) => {
+    const newInitialBalance = targetWalletAmount - (totalIncome - totalExpenses);
+    setInitialBalance(newInitialBalance);
+  };
 
   // Calculate Monthly Stats based on Global selectedDate
   const { monthlyExpenses, monthlyIncome, currentMonthTransactions } =
@@ -78,6 +93,98 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           .reduce((sum, t) => sum + t.amount, 0),
       };
     }, [transactions, selectedDate]);
+
+  // Group monthly expenses by day
+  const dailyExpensesGrouped = useMemo(() => {
+    const expenses = transactions.filter((t) => {
+      const d = new Date(t.date);
+      return (
+        d.getMonth() === selectedDate.getMonth() &&
+        d.getFullYear() === selectedDate.getFullYear() &&
+        t.type === "expense"
+      );
+    });
+
+    const groups: Record<string, { date: Date; total: number; items: Transaction[] }> = {};
+
+    expenses.forEach((t) => {
+      const dateKey = new Date(t.date).toDateString();
+      if (!groups[dateKey]) {
+        groups[dateKey] = {
+          date: new Date(t.date),
+          total: 0,
+          items: [],
+        };
+      }
+      groups[dateKey].total += t.amount;
+      groups[dateKey].items.push(t);
+    });
+
+    // Sort days descending (most recent first)
+    const sortedDays = Object.values(groups).sort(
+      (a, b) => b.date.getTime() - a.date.getTime()
+    );
+
+    // Sort items within each day by time descending (most recent first)
+    sortedDays.forEach((day) => {
+      day.items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+
+    return sortedDays;
+  }, [transactions, selectedDate]);
+
+  // Slice to maximum of 3 transaction items across all days
+  const displayedDailyExpenses = useMemo(() => {
+    let count = 0;
+    const result: Array<{ date: Date; total: number; items: Transaction[] }> = [];
+    
+    for (const dayGroup of dailyExpensesGrouped) {
+      if (count >= 3) break;
+      const slicedItems: Transaction[] = [];
+      let dayTotal = 0;
+      for (const item of dayGroup.items) {
+        if (count >= 3) break;
+        slicedItems.push(item);
+        dayTotal += item.amount;
+        count++;
+      }
+      if (slicedItems.length > 0) {
+        result.push({
+          date: dayGroup.date,
+          total: dayTotal,
+          items: slicedItems,
+        });
+      }
+    }
+    return result;
+  }, [dailyExpensesGrouped]);
+
+  const formatDayHeader = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      });
+    }
+  };
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   const handleOpenEdit = (item: Transaction) => {
     setEditingTransaction(item);
@@ -105,14 +212,18 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           <Text style={[styles.headerTitle, { color: colors.textMain }]}>
             {selectedDate.toLocaleDateString("en-US", { month: "long" })}
           </Text>
-          <View style={styles.profileSection}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setIsEditNameModalVisible(true)}
+            style={styles.profileSection}
+          >
             <Image
               source={{
-                uri: "https://ui-avatars.com/api/?name=Victor&background=66C2A9&color=fff",
+                uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=66C2A9&color=fff`,
               }}
               style={styles.userAvatar}
             />
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.headerRightControls}>
@@ -151,12 +262,16 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
             )}
           </TouchableOpacity>
 
-          <View style={styles.balanceChip}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setIsWalletModalVisible(true)}
+            style={styles.balanceChip}
+          >
             <Wallet size={14} color="#FFFFFF" style={styles.balanceIcon} />
             <Text style={styles.balanceText}>
               {formatCurrency(balance, currency)}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -278,6 +393,114 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           })}
         </View>
 
+        <View style={styles.sectionHeader}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: colors.textMain, marginBottom: 0 },
+            ]}
+          >
+            Daily Spending
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation?.navigate("History", { filter: "expense" })}
+          >
+            <Text style={styles.seeAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        {displayedDailyExpenses.length === 0 ? (
+          <View
+            style={[
+              styles.emptyDailySpending,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+              No expenses recorded for this month.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.dailySpendingList}>
+            {displayedDailyExpenses.map((dayGroup) => (
+              <View
+                key={dayGroup.date.toDateString()}
+                style={[
+                  styles.dayCard,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                ]}
+              >
+                <View style={styles.dayHeader}>
+                  <Text style={[styles.dayHeaderText, { color: colors.textMain }]}>
+                    {formatDayHeader(dayGroup.date)}
+                  </Text>
+                  <Text style={[styles.dayTotalText, { color: colors.textMain }]}>
+                    {formatCurrency(dayGroup.total, currency)}
+                  </Text>
+                </View>
+                <View style={[styles.dayDivider, { backgroundColor: colors.divider }]} />
+                <View style={styles.dayTransactions}>
+                  {dayGroup.items.map((item) => {
+                    const catData =
+                      CATEGORIES.find((c) => c.name === item.category) ||
+                      CATEGORIES.find((c) => c.name === "General") ||
+                      CATEGORIES[CATEGORIES.length - 1];
+                    const IconComponent = catData.icon;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          Alert.alert(
+                            "Transaction Options",
+                            "What would you like to do?",
+                            [
+                              { text: "Cancel", style: "cancel" },
+                              {
+                                text: "Edit",
+                                onPress: () => handleOpenEdit(item),
+                              },
+                              {
+                                text: "Delete",
+                                style: "destructive",
+                                onPress: () => deleteTransaction(item.id),
+                              },
+                            ],
+                          );
+                        }}
+                        style={styles.dayTransactionRow}
+                      >
+                        <View
+                          style={[
+                            styles.dayRowIconContainer,
+                            { backgroundColor: catData.color + "15" },
+                          ]}
+                        >
+                          <IconComponent size={18} color={catData.color} />
+                        </View>
+                        <View style={styles.dayRowInfo}>
+                          <Text
+                            style={[styles.dayRowCategoryText, { color: colors.textMain }]}
+                            numberOfLines={1}
+                          >
+                            {item.notes ? item.notes : item.category}
+                          </Text>
+                          <Text style={[styles.dayRowTimeText, { color: colors.textSecondary }]}>
+                            {item.notes ? `${item.category} • ` : ""}
+                            {formatTime(item.date)}
+                          </Text>
+                        </View>
+                        <Text style={[styles.dayRowAmountText, { color: "#F44336" }]}>
+                          -{formatCurrency(item.amount, currency)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         <Text style={[styles.sectionTitle, { color: colors.textMain }]}>
           Budgeting
         </Text>
@@ -368,6 +591,18 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
         isVisible={isModalVisible}
         onClose={handleCloseModal}
         editingTransaction={editingTransaction}
+      />
+      <SetWalletModal
+        isVisible={isWalletModalVisible}
+        onClose={() => setIsWalletModalVisible(false)}
+        onSave={handleSaveWallet}
+        currentBalance={balance}
+      />
+      <EditNameModal
+        isVisible={isEditNameModalVisible}
+        onClose={() => setIsEditNameModalVisible(false)}
+        onSave={setUserName}
+        currentName={userName}
       />
     </SafeAreaView>
   );
@@ -490,6 +725,75 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: "100%",
     borderRadius: 3,
+  },
+  emptyDailySpending: {
+    padding: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 32,
+  },
+  dailySpendingList: {
+    gap: 16,
+    marginBottom: 32,
+  },
+  dayCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+  },
+  dayHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  dayHeaderText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  dayTotalText: {
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  dayDivider: {
+    height: 1,
+    marginVertical: 12,
+  },
+  dayTransactions: {
+    gap: 12,
+  },
+  dayTransactionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dayRowIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dayRowInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  dayRowCategoryText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  dayRowTimeText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  dayRowAmountText: {
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
 

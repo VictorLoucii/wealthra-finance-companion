@@ -20,6 +20,11 @@ interface FinanceStore {
   toggleTheme: () => void;
   // --------------------------
 
+  initialBalance: number;
+  setInitialBalance: (amount: number) => void;
+  userName: string;
+  setUserName: (name: string) => void;
+
   transactions: Transaction[];
   selectedDate: string;
   setSelectedDate: (date: Date) => void;
@@ -47,6 +52,8 @@ export const useFinanceStore = create<FinanceStore>()(
       // --- Settings Default State ---
       currency: "INR", // Backward Compatibility: defaults to USD
       theme: "light", // Backward Compatibility: defaults to light mode
+      initialBalance: 0,
+      userName: "Victor",
 
 setCurrency: (newCurrency) =>
         set((state) => {
@@ -78,11 +85,20 @@ setCurrency: (newCurrency) =>
             monthlyBudgets: updatedMonthlyBudgets,
             // 3. Convert legacy budget limit (Maintains Backward Compatibility)
             budgetLimit: state.budgetLimit * conversionFactor,
+            initialBalance: (state.initialBalance || 0) * conversionFactor,
           };
         }),      
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === "light" ? "dark" : "light",
+        })),
+      setInitialBalance: (amount) =>
+        set(() => ({
+          initialBalance: amount,
+        })),
+      setUserName: (name) =>
+        set(() => ({
+          userName: name,
         })),
       // ------------------------------
 
@@ -151,7 +167,8 @@ setCurrency: (newCurrency) =>
         })),
 
       getBalance: () => {
-        return get().transactions.reduce((total, t) => {
+        const initial = get().initialBalance || 0;
+        return initial + get().transactions.reduce((total, t) => {
           return t.type === "income" ? total + t.amount : total - t.amount;
         }, 0);
       },

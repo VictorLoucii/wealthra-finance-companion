@@ -11,6 +11,15 @@ interface TransactionItemProps {
   onPress?: (id: string) => void;
 }
 
+const formatTime = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
 export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
@@ -49,6 +58,9 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
         <Text style={[styles.transDate, { color: colors.textSecondary }]}>
           {item.notes ? `${item.category} • ` : ""}
           {new Date(item.date).toLocaleDateString()}
+        </Text>
+        <Text style={[styles.transDate, { color: colors.textSecondary, marginTop: 1 }]}>
+          {formatTime(item.date)}
         </Text>
       </View>
       <Text

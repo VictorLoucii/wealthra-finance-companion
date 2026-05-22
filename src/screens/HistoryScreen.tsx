@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,47 @@ import { ChevronLeft, Trash2, Search, X } from "lucide-react-native";
 import { AddTransactionModal } from "../components/AddTransactionModal";
 import { COLORS } from "../constants/color";
 
-const HistoryScreen = ({ navigation }: { navigation?: any }) => {
+const getRelativeDateString = (dateStr: string) => {
+  const now = new Date();
+  const txDate = new Date(dateStr);
+
+  const d1 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const d2 = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+
+  const diffTime = d1.getTime() - d2.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) {
+    return "today";
+  }
+  if (diffDays === 1) {
+    return "1 day ago";
+  }
+  if (diffDays <= 6) {
+    return `${diffDays} days ago`;
+  }
+
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
+  }
+
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return months === 1 ? "1 month ago" : `${months} months ago`;
+  }
+
+  const years = Math.floor(diffDays / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
+};
+
+const HistoryScreen = ({
+  navigation,
+  route,
+}: {
+  navigation?: any;
+  route?: any;
+}) => {
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
   const filters: Array<"All" | "income" | "expense"> = [
@@ -25,7 +65,11 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
   ];
   const [activeFilter, setActiveFilter] = useState<
     "All" | "income" | "expense"
-  >("All");
+  >(route?.params?.filter || "All");
+
+  useEffect(() => {
+    setActiveFilter(route?.params?.filter || "All");
+  }, [route?.params?.filter]);
   const {
     transactions,
     clearAllTransactions,
@@ -191,12 +235,21 @@ const HistoryScreen = ({ navigation }: { navigation?: any }) => {
           <FlashList<Transaction>
             data={filteredData}
             renderItem={({ item }) => (
-              <TransactionItem
-                item={item}
-                onPress={() => handleItemPress(item)}
-              />
+              <View>
+                <Text
+                  style={[
+                    styles.relativeDateText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {getRelativeDateString(item.date)}
+                </Text>
+                <TransactionItem
+                  item={item}
+                  onPress={() => handleItemPress(item)}
+                />
+              </View>
             )}
-            estimatedItemSize={70}
             contentContainerStyle={styles.listContent}
             keyExtractor={(item) => item.id}
           />
@@ -267,6 +320,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#303960",
+  },
+  relativeDateText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 6,
+    marginLeft: 4,
   },
 });
 

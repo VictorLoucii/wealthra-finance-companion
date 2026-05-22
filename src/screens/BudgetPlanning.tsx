@@ -14,6 +14,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { SetBudgetModal } from "../components/SetBudgetModal";
+import { EditNameModal } from "../components/EditNameModal";
 import { Wallet, Banknote, ChevronLeft } from "lucide-react-native";
 import { TransactionItem } from "../components/TransactionItem";
 import { AddTransactionModal } from "../components/AddTransactionModal";
@@ -32,6 +33,8 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
   const setSelectedDate = useFinanceStore((state) => state.setSelectedDate);
   const deleteTransaction = useFinanceStore((state) => state.deleteTransaction);
   const currency = useFinanceStore((state) => state.currency);
+  const userName = useFinanceStore((state) => state.userName);
+  const setUserName = useFinanceStore((state) => state.setUserName);
 
   // 2. Synchronize Local Date with Global Store
   const currentDate = useMemo(
@@ -46,6 +49,7 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
   const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
   const [isTransactionModalVisible, setIsTransactionModalVisible] =
     useState(false);
+  const [isEditNameModalVisible, setIsEditNameModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
@@ -159,17 +163,21 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
           </Text>
         </View>
 
-        <View style={styles.profileSection}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setIsEditNameModalVisible(true)}
+          style={styles.profileSection}
+        >
           <Image
             source={{
-              uri: "https://ui-avatars.com/api/?name=Victor&background=66C2A9&color=fff",
+              uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=66C2A9&color=fff`,
             }}
             style={styles.userAvatar}
           />
           <Text style={[styles.userName, { color: colors.textMain }]}>
-            VICTOR
+            {userName}
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View
@@ -281,7 +289,6 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
       <View style={styles.listContainer}>
         <FlashList<Transaction>
           data={expenseTransactions}
-          estimatedItemSize={80}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
           renderItem={({ item, index }) => {
@@ -349,6 +356,12 @@ const BudgetPlanningScreen = ({ navigation }: { navigation?: any }) => {
         isVisible={isTransactionModalVisible}
         onClose={handleCloseTransactionModal}
         editingTransaction={editingTransaction}
+      />
+      <EditNameModal
+        isVisible={isEditNameModalVisible}
+        onClose={() => setIsEditNameModalVisible(false)}
+        onSave={setUserName}
+        currentName={userName}
       />
     </SafeAreaView>
   );
