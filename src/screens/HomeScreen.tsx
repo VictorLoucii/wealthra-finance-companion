@@ -309,7 +309,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                 displayValue = formatCurrency(monthlyExpenses, currency);
               }
             } else if (item.name === "Transactions") {
-              displayValue = formatCurrency(monthlyIncome, currency);
+              displayValue = "";
             }
 
             return (
@@ -336,11 +336,11 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
                 <Text
                   style={[
                     styles.gridCardText,
-                    { color: colors.textMain },
+                    { color: colors.textMain, textAlign: "center" },
                     isActive && styles.gridCardTextActive,
                   ]}
                 >
-                  {item.name}
+                  {item.name === "Transactions" ? "Add a\nTransaction" : item.name}
                 </Text>
 
                 {displayValue !== "" && (
