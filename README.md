@@ -49,6 +49,7 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
   * **Dynamic "Time-Travel" Tracker**: A sophisticated month-to-month navigation system that updates all dashboard metrics based on the selected month.
   * **Insights Screen**: A dedicated section providing a **Category Breakdown** via a dynamic doughnut chart.
   * **Goal Feature: Smart Budgeting**: A budget limit tracker with a "Traffic Light" progress system (**Green** $\to$ **Orange** $\to$ **Red**).
+  * **Quick Notes Section**: A premium, interactive dashboard memo card for jotting down reminders, shopping list items, or general thoughts. Supports easy updates and a dedicated "Clear Note" feature via a custom multiline modal.
 
 -----
 
@@ -58,6 +59,7 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
   * **State Management**: **Zustand** with **AsyncStorage** persistence.
   * **State Mapping**: Implemented a custom `setCurrency` action in the store that maps through the `transactions` array and `monthlyBudgets` record to maintain data integrity during currency shifts.
   * **Data Handling**: Utilizes a `monthKey` mapping strategy (`YYYY-MM`) to isolate budgets and transactions.
+  * **Offline Note Engine**: Integrated the note state into the persistent Zustand/AsyncStorage pipeline to ensure user memos are safely saved offline.
 
 -----
 

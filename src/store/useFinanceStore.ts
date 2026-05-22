@@ -24,6 +24,8 @@ interface FinanceStore {
   setInitialBalance: (amount: number) => void;
   userName: string;
   setUserName: (name: string) => void;
+  note: string;
+  setNote: (note: string) => void;
 
   transactions: Transaction[];
   selectedDate: string;
@@ -99,6 +101,11 @@ setCurrency: (newCurrency) =>
       setUserName: (name) =>
         set(() => ({
           userName: name,
+        })),
+      note: "",
+      setNote: (note) =>
+        set(() => ({
+          note,
         })),
       // ------------------------------
 

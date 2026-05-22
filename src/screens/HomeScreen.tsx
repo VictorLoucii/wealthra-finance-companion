@@ -16,10 +16,12 @@ import {
   Wallet,
   PieChart,
   ArrowRightLeft,
+  FileText,
 } from "lucide-react-native";
 import { AddTransactionModal } from "../components/AddTransactionModal";
 import { SetWalletModal } from "../components/SetWalletModal";
 import { EditNameModal } from "../components/EditNameModal";
+import { EditNoteModal } from "../components/EditNoteModal";
 import { useFinanceStore, Transaction } from "../store/useFinanceStore";
 import { formatCurrency } from "../utils/formatters";
 import { TransactionItem } from "../components/TransactionItem";
@@ -39,6 +41,8 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const totalExpenses = useFinanceStore((state) => state.getTotalExpenses());
   const userName = useFinanceStore((state) => state.userName);
   const setUserName = useFinanceStore((state) => state.setUserName);
+  const note = useFinanceStore((state) => state.note);
+  const setNote = useFinanceStore((state) => state.setNote);
 
   // Settings State
   const currency = useFinanceStore((state) => state.currency);
@@ -61,6 +65,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isWalletModalVisible, setIsWalletModalVisible] = useState(false);
   const [isEditNameModalVisible, setIsEditNameModalVisible] = useState(false);
+  const [isNoteModalVisible, setIsNoteModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [selectedMainItem, setSelectedMainItem] = useState("Budget");
@@ -393,6 +398,37 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           })}
         </View>
 
+        {/* Quick Notes Section */}
+        <View style={styles.noteSectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.textMain, marginBottom: 12 }]}>
+            Quick Notes
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setIsNoteModalVisible(true)}
+            style={[
+              styles.noteCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.noteHeader}>
+              <FileText size={18} color={colors.accent} style={{ marginTop: 1 }} />
+              <Text
+                style={[
+                  styles.noteContentText,
+                  note ? { color: colors.textMain } : { color: colors.textSecondary, fontStyle: "italic" },
+                ]}
+                numberOfLines={3}
+              >
+                {note || "Write down something you need to buy or remember..."}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.sectionHeader}>
           <Text
             style={[
@@ -604,6 +640,13 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
         onSave={setUserName}
         currentName={userName}
       />
+      <EditNoteModal
+        isVisible={isNoteModalVisible}
+        onClose={() => setIsNoteModalVisible(false)}
+        onSave={setNote}
+        onClear={() => setNote("")}
+        currentNote={note}
+      />
     </SafeAreaView>
   );
 };
@@ -794,6 +837,30 @@ const styles = StyleSheet.create({
   dayRowAmountText: {
     fontSize: 14,
     fontWeight: "700",
+  },
+  noteSectionContainer: {
+    marginBottom: 32,
+  },
+  noteCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+  },
+  noteHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  noteContentText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 20,
   },
 });
 
