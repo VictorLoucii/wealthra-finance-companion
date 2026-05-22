@@ -56,3 +56,6 @@ yarn-error.*
 
 # Continue.dev (If you have local project-specific config)
 .continue/
+
+# Agents
+.agents/

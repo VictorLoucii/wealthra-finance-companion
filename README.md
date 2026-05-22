@@ -39,9 +39,12 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
 
 ### 🚀 Core Requirements & Features
 
-  * **Command Center Dashboard**: An informative overview featuring **Global Balance**, **Monthly Income**, and **Monthly Expenses**.
+  * **Command Center Dashboard**: An informative overview featuring **Global Balance** (editable cash-on-hand), **Monthly Income**, and **Monthly Expenses**.
+  * **Editable Profile Customization**: Users can edit their username directly from the Home Screen, which automatically updates initials dynamically on the avatar badge across the application.
+  * **Pre-filtered History Views & Slice Limits**: Slices Daily Spending to a maximum of 3 items, with a "View All" link redirecting to the History screen pre-filtered for expenses.
+  * **Relative Date Headers**: Bold, lowercase relative dates (e.g. `today`, `1 day ago`, `2 days ago` ... `1 week ago`, etc.) displayed on the History Screen.
   * **Dynamic Light/Dark Mode**: A system-wide, professional theme toggle built with centralized semantic color mapping.
-  * **Currency Value Engine**: Full support for **Indian Rupees (₹)** and **US Dollars ($)**. Unlike basic trackers, Wealthra performs real-time mathematical conversion of all historical transactions and budget limits when toggling currencies.
+  * **Currency Value Engine**: Full support for **Indian Rupees (₹)** and **US Dollars ($)**. Unlike basic trackers, Wealthra performs real-time mathematical conversion of all historical transactions, budget limits, and initial balances when toggling currencies.
   * **Localization Polish**: Uses `Intl.NumberFormat` with the `en-IN` locale to ensure correct Indian numbering system comma placement (e.g., 1,00,000) for INR users.
   * **Dynamic "Time-Travel" Tracker**: A sophisticated month-to-month navigation system that updates all dashboard metrics based on the selected month.
   * **Insights Screen**: A dedicated section providing a **Category Breakdown** via a dynamic doughnut chart.
@@ -68,7 +71,8 @@ In alignment with the assignment’s focus on "Reasonable Assumptions" and "Poli
     **Trade-off**: While live APIs offer precision, a fixed rate ensures **instant UI feedback** and prevents "data flickering" caused by fluctuating rates, providing a more stable user experience.
 
 2.  **The "Global Wallet" Logic**:
-    While budgets "time-travel" per month, the **Balance Chip** remains a global sum, providing an immutable "Ground Truth" of actual cash-on-hand.
+    While budgets "time-travel" per month, the **Balance Chip** remains a global sum, providing a "Ground Truth" of actual cash-on-hand. Users can now edit this wallet balance directly from the Home Screen, which dynamically updates cash-on-hand by calculating:
+    $$\text{Wallet Balance} = \text{initialBalance} + \text{Transactions (Income - Expenses)}$$
 
 3.  **Traffic Light Budgeting**:
     To drive habit change, the progress bar shifts colors at specific thresholds: **Orange** at 70% and **Red** at 90% of the limit.
