@@ -12,6 +12,13 @@ export interface Transaction {
   notes?: string;
 }
 
+export interface BudgetGoal {
+  limit: number;
+  durationType: "full_month" | "custom_days";
+  customDays?: number;
+  startDate: string;
+}
+
 interface FinanceStore {
   // --- New Settings State ---
   currency: "USD" | "INR";
@@ -30,10 +37,10 @@ interface FinanceStore {
   transactions: Transaction[];
   selectedDate: string;
   setSelectedDate: (date: Date) => void;
-  monthlyBudgets: Record<string, number>; // Map of 'YYYY-MM' -> amount
+  monthlyBudgets: Record<string, number | BudgetGoal>; // Map of 'YYYY-MM' -> amount or BudgetGoal
   budgetLimit: number; // Kept for Backward Compatibility
   lastUsedType?: "income" | "expense";
-  setMonthlyBudget: (monthKey: string, limit: number) => void;
+  setMonthlyBudget: (monthKey: string, goal: number | BudgetGoal) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   editTransaction: (
     id: string,
@@ -76,9 +83,17 @@ setCurrency: (newCurrency) =>
           }));
 
           // 2. Convert all monthly budgets
-          const updatedMonthlyBudgets: Record<string, number> = {};
+          const updatedMonthlyBudgets: Record<string, number | BudgetGoal> = {};
           Object.keys(state.monthlyBudgets).forEach((monthKey) => {
-            updatedMonthlyBudgets[monthKey] = state.monthlyBudgets[monthKey] * conversionFactor;
+            const budget = state.monthlyBudgets[monthKey];
+            if (typeof budget === "number") {
+              updatedMonthlyBudgets[monthKey] = budget * conversionFactor;
+            } else {
+              updatedMonthlyBudgets[monthKey] = {
+                ...budget,
+                limit: budget.limit * conversionFactor,
+              };
+            }
           });
 
           return {
@@ -119,11 +134,11 @@ setCurrency: (newCurrency) =>
       setSelectedDate: (date) => set({ selectedDate: date.toISOString() }),
 
       // Fixes "Budget Leakage": Uses monthKey (YYYY-MM) to isolate budget values
-      setMonthlyBudget: (monthKey, limit) =>
+      setMonthlyBudget: (monthKey, goal) =>
         set((state) => ({
           monthlyBudgets: {
             ...state.monthlyBudgets,
-            [monthKey]: limit,
+            [monthKey]: goal,
           },
         })),
 

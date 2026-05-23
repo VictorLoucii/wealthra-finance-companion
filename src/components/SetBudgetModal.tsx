@@ -8,16 +8,16 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
-import { Alert } from "react-native";
-import { useFinanceStore } from "../store/useFinanceStore";
+import { useFinanceStore, BudgetGoal } from "../store/useFinanceStore";
 import { COLORS } from "../constants/color";
 
 interface SetBudgetModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSave: (amount: number) => void;
-  currentLimit: number;
+  onSave: (goal: BudgetGoal) => void;
+  currentLimit: number | BudgetGoal;
 }
 
 export const SetBudgetModal = ({
@@ -27,18 +27,32 @@ export const SetBudgetModal = ({
   currentLimit,
 }: SetBudgetModalProps) => {
   const [value, setValue] = useState("");
+  const [durationType, setDurationType] = useState<"full_month" | "custom_days">("full_month");
+  const [customDays, setCustomDays] = useState("7");
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
 
   // Sync internal state when modal opens
   useEffect(() => {
-    if (isVisible) setValue(currentLimit > 0 ? currentLimit.toString() : "");
-  }, [isVisible]);
+    if (isVisible) {
+      if (typeof currentLimit === "number") {
+        setValue(currentLimit > 0 ? currentLimit.toString() : "");
+        setDurationType("full_month");
+        setCustomDays("7");
+      } else if (currentLimit) {
+        setValue(currentLimit.limit > 0 ? currentLimit.limit.toString() : "");
+        setDurationType(currentLimit.durationType);
+        setCustomDays(currentLimit.customDays ? currentLimit.customDays.toString() : "7");
+      } else {
+        setValue("");
+        setDurationType("full_month");
+        setCustomDays("7");
+      }
+    }
+  }, [isVisible, currentLimit]);
 
   const handleChangeText = (text: string) => {
-    // Regex allows only numbers and one decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
-    // Ensure only one decimal point exists
     const parts = cleaned.split(".");
     if (parts.length > 2) return;
     setValue(cleaned);
@@ -46,16 +60,27 @@ export const SetBudgetModal = ({
 
   const handleSave = () => {
     const num = parseFloat(value);
-    // NEW: Validation to ensure budget is a positive, valid number
-    if (!isNaN(num) && num > 0) {
-      onSave(num);
-      onClose();
-    } else {
-      Alert.alert(
-        "Invalid Budget",
-        "Please enter a budget amount greater than 0.",
-      );
+    if (isNaN(num) || num <= 0) {
+      Alert.alert("Invalid Budget", "Please enter a budget amount greater than 0.");
+      return;
     }
+
+    let parsedDays: number | undefined = undefined;
+    if (durationType === "custom_days") {
+      parsedDays = parseInt(customDays, 10);
+      if (isNaN(parsedDays) || parsedDays <= 0) {
+        Alert.alert("Invalid Days", "Please enter a valid number of days (at least 1).");
+        return;
+      }
+    }
+
+    onSave({
+      limit: num,
+      durationType,
+      customDays: parsedDays,
+      startDate: new Date().toISOString(), // Period starts when the budget is created/updated
+    });
+    onClose();
   };
 
   return (
@@ -69,29 +94,101 @@ export const SetBudgetModal = ({
             style={[styles.content, { backgroundColor: colors.cardBackground }]}
           >
             <Text style={[styles.title, { color: colors.textMain }]}>
-              Set Monthly Budget
+              Set Budget Goal
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              How much do you plan to spend this month?
+              Select budget duration and amount.
             </Text>
 
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.textMain,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholderTextColor={colors.textSecondary}
-              placeholder="e.g. 2000"
-              keyboardType="decimal-pad" // Better UX for numbers
-              value={value}
-              onChangeText={handleChangeText} // Swapped for the new handler
-              autoFocus
-              maxLength={10} // Prevents extreme overflow values
-            />
+            {/* Duration Selector */}
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  { borderColor: colors.border },
+                  durationType === "full_month" ? styles.activeChip : { opacity: 0.6 },
+                ]}
+                onPress={() => setDurationType("full_month")}
+              >
+                <Text
+                  style={[
+                    styles.toggleText,
+                    { color: colors.textSecondary },
+                    durationType === "full_month" && styles.activeText,
+                  ]}
+                >
+                  Full Month
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  { borderColor: colors.border },
+                  durationType === "custom_days" ? styles.activeChip : { opacity: 0.6 },
+                ]}
+                onPress={() => setDurationType("custom_days")}
+              >
+                <Text
+                  style={[
+                    styles.toggleText,
+                    { color: colors.textSecondary },
+                    durationType === "custom_days" && styles.activeText,
+                  ]}
+                >
+                  Custom Days
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Custom Days Input */}
+            {durationType === "custom_days" && (
+              <View style={styles.daysInputContainer}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Number of Days
+                </Text>
+                <TextInput
+                  style={[
+                    styles.daysInput,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      color: colors.textMain,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  placeholderTextColor={colors.textSecondary}
+                  placeholder="e.g. 7 or 14"
+                  keyboardType="number-pad"
+                  value={customDays}
+                  onChangeText={(text) => setCustomDays(text.replace(/[^0-9]/g, ""))}
+                  maxLength={3}
+                />
+              </View>
+            )}
+
+            {/* Amount Input */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Budget Amount
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBackground,
+                    color: colors.textMain,
+                    borderColor: colors.border,
+                  },
+                ]}
+                placeholderTextColor={colors.textSecondary}
+                placeholder="e.g. 2000"
+                keyboardType="decimal-pad"
+                value={value}
+                onChangeText={handleChangeText}
+                autoFocus
+                maxLength={10}
+              />
+            </View>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
@@ -107,7 +204,7 @@ export const SetBudgetModal = ({
               <TouchableOpacity
                 style={[styles.saveButton, !value && { opacity: 0.5 }]}
                 onPress={handleSave}
-                disabled={!value} // Prevents empty submissions
+                disabled={!value}
               >
                 <Text style={styles.saveButtonText}>Save Goal</Text>
               </TouchableOpacity>
@@ -128,7 +225,6 @@ const styles = StyleSheet.create({
   },
   container: { width: "85%" },
   content: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 24,
     shadowColor: "#000",
@@ -136,18 +232,48 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  title: { fontSize: 20, fontWeight: "700", color: "#303960", marginBottom: 8 },
-  subtitle: { fontSize: 14, color: "#94A3B8", marginBottom: 20 },
+  title: { fontSize: 20, fontWeight: "700", marginBottom: 8 },
+  subtitle: { fontSize: 14, marginBottom: 20 },
+  toggleContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  toggleButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  activeChip: {
+    backgroundColor: "#66C2A9",
+    borderColor: "#55B198",
+  },
+  toggleText: { fontWeight: "700" },
+  activeText: { color: "white" },
+  daysInputContainer: {
+    marginBottom: 20,
+  },
+  daysInput: {
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    fontWeight: "600",
+    borderWidth: 1,
+  },
+  inputContainer: {
+    marginBottom: 12,
+  },
   input: {
-    backgroundColor: "#F8FAFC",
     borderRadius: 12,
     padding: 16,
     fontSize: 18,
     fontWeight: "600",
-    color: "#303960",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
   },
+  label: { fontSize: 13, fontWeight: "700", marginBottom: 6 },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -155,7 +281,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   cancelButton: { paddingVertical: 12, paddingHorizontal: 20 },
-  cancelButtonText: { color: "#94A3B8", fontWeight: "600" },
+  cancelButtonText: { fontWeight: "600" },
   saveButton: {
     backgroundColor: "#66C2A9",
     paddingVertical: 12,
