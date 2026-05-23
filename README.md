@@ -48,7 +48,8 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
   * **Localization Polish**: Uses `Intl.NumberFormat` with the `en-IN` locale to ensure correct Indian numbering system comma placement (e.g., 1,00,000) for INR users.
   * **Dynamic "Time-Travel" Tracker**: A sophisticated month-to-month navigation system that updates all dashboard metrics based on the selected month.
   * **Insights Screen**: A dedicated section providing a **Category Breakdown** via a dynamic doughnut chart.
-  * **Goal Feature: Smart Budgeting**: A budget limit tracker with a "Traffic Light" progress system (**Green** $\to$ **Orange** $\to$ **Red**).
+  * **Goal Feature: Custom Duration Budgeting**: Supports setting budgets either for a **Full Month** or a **Custom Duration (e.g., 7 Days, 14 Days, etc.)** with a "Traffic Light" progress system (**Green** $\to$ **Orange** $\to$ **Red**).
+  * **Daily Target Budget & Spent Progress**: Displays the daily target budget allowance (`limit / durationDays`) and tracks today's spent progress/percentage in the Daily Spending section.
   * **Quick Notes Section**: A premium, interactive dashboard memo card for jotting down reminders, shopping list items, or general thoughts. Supports easy updates and a dedicated "Clear Note" feature via a custom multiline modal.
 
 -----
@@ -57,7 +58,9 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
 
   * **Framework**: React Native (Expo SDK 54) + **TypeScript**.
   * **State Management**: **Zustand** with **AsyncStorage** persistence.
-  * **State Mapping**: Implemented a custom `setCurrency` action in the store that maps through the `transactions` array and `monthlyBudgets` record to maintain data integrity during currency shifts.
+  * **Architecture Layout (Modularity & Hooks)**: Extracted all screen files to keep them under 150 lines. Business logic and state calculations are delegated to custom hooks (`useHomeScreen`, `useBudgetPlanning`), and UI rendering is divided into presentational sub-components.
+  * **Rolling Budget Window Engine**: Tracks transaction dates against custom duration active windows (`[startDate, startDate + customDays]`) to compute spent progress on custom-days budgets.
+  * **State Mapping**: Implemented a custom `setCurrency` action in the store that maps through the `transactions` array and `monthlyBudgets` record to maintain data integrity during currency shifts (supporting structured budget goals).
   * **Data Handling**: Utilizes a `monthKey` mapping strategy (`YYYY-MM`) to isolate budgets and transactions.
   * **Offline Note Engine**: Integrated the note state into the persistent Zustand/AsyncStorage pipeline to ensure user memos are safely saved offline.
 
@@ -76,10 +79,13 @@ In alignment with the assignment’s focus on "Reasonable Assumptions" and "Poli
     While budgets "time-travel" per month, the **Balance Chip** remains a global sum, providing a "Ground Truth" of actual cash-on-hand. Users can now edit this wallet balance directly from the Home Screen, which dynamically updates cash-on-hand by calculating:
     $$\text{Wallet Balance} = \text{initialBalance} + \text{Transactions (Income - Expenses)}$$
 
-3.  **Traffic Light Budgeting**:
+3.  **Active Rolling Window for Custom Budgets**:
+    When a budget is set to a custom duration (e.g., 7 days or 14 days), expenses are tracked strictly within the active date window starting from the budget's creation date. This prevents historical or future monthly expenses from polluting short-term budgeting progress.
+
+4.  **Traffic Light Budgeting**:
     To drive habit change, the progress bar shifts colors at specific thresholds: **Orange** at 70% and **Red** at 90% of the limit.
 
-4.  **Zero-Friction Interaction**:
+5.  **Zero-Friction Interaction**:
     Numeric-restricted fields and pre-selected categories reduce the "taps-to-task" ratio, encouraging high-frequency logging.
 
 -----
