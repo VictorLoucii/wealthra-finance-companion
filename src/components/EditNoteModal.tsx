@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from "react-native";
 import { useFinanceStore } from "../store/useFinanceStore";
 import { COLORS } from "../constants/color";
@@ -28,8 +29,34 @@ export const EditNoteModal = ({
   currentNote,
 }: EditNoteModalProps) => {
   const [value, setValue] = useState("");
+  const [keyboardPadding, setKeyboardPadding] = useState(0);
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        if (Platform.OS === "android") {
+          setKeyboardPadding(e.endCoordinates.height);
+        }
+      }
+    );
+    
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        if (Platform.OS === "android") {
+          setKeyboardPadding(0);
+        }
+      }
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // Sync internal state when modal opens
   useEffect(() => {
@@ -50,11 +77,14 @@ export const EditNoteModal = ({
 
   return (
     <Modal visible={isVisible} animationType="fade" transparent>
-      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.container}
-        >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={[
+          styles.overlay, 
+          { backgroundColor: colors.modalOverlay, paddingBottom: keyboardPadding }
+        ]}
+      >
+        <View style={styles.container}>
           <View
             style={[styles.content, { backgroundColor: colors.cardBackground }]}
           >
@@ -119,8 +149,8 @@ export const EditNoteModal = ({
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

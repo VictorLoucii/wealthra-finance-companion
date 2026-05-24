@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { PieChart, ArrowRightLeft } from "lucide-react-native";
 import { formatCurrency } from "../utils/formatters";
+import { BudgetGoal } from "../store/useFinanceStore";
 
 interface MainGridProps {
   selectedMainItem: string;
@@ -12,6 +13,7 @@ interface MainGridProps {
   currentMonthBudget: number;
   currency: "USD" | "INR";
   colors: any;
+  budgetGoal?: BudgetGoal | null;
 }
 
 export const MainGrid = ({
@@ -23,6 +25,7 @@ export const MainGrid = ({
   currentMonthBudget,
   currency,
   colors,
+  budgetGoal,
 }: MainGridProps) => {
   const gridItems = [
     { name: "Budget", icon: PieChart },
@@ -98,6 +101,20 @@ export const MainGrid = ({
                 ]}
               >
                 {displayValue}
+              </Text>
+            )}
+
+            {item.name === "Budget" && currentMonthBudget > 0 && budgetGoal && (
+              <Text
+                style={[
+                  styles.durationText,
+                  { color: colors.textSecondary },
+                  isActive && styles.gridValueActive,
+                ]}
+              >
+                {budgetGoal.durationType === "full_month"
+                  ? "For 1 month"
+                  : `For ${budgetGoal.customDays || 7} days`}
               </Text>
             )}
 
@@ -181,6 +198,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   gridValueActive: { color: "rgba(255, 255, 255, 0.8)" },
+  durationText: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 2,
+  },
   progressBarContainer: {
     width: "100%",
     height: 6,

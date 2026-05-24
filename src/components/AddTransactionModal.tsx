@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -45,13 +45,19 @@ export const AddTransactionModal = ({
   const [type, setType] = useState<"income" | "expense">("income");
 
   const [keyboardPadding, setKeyboardPadding] = useState(0);
+  const isKeyboardActive = useRef(false);
+  const [isNotesFocused, setIsNotesFocused] = useState(false);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
         if (Platform.OS === "android") {
+          isKeyboardActive.current = true;
           setKeyboardPadding(e.endCoordinates.height);
+          if (__DEV__) {
+            console.log("[DEBUG] keyboardDidShow fired. Height:", e.endCoordinates.height);
+          }
         }
       },
     );
@@ -60,7 +66,32 @@ export const AddTransactionModal = ({
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
         if (Platform.OS === "android") {
+          isKeyboardActive.current = false;
           setKeyboardPadding(0);
+          if (__DEV__) {
+            console.log("[DEBUG] keyboardDidHide fired.");
+          }
+        }
+      },
+    );
+
+    const changeSubscription = Keyboard.addListener(
+      "keyboardDidChangeFrame",
+      (e) => {
+        if (Platform.OS === "android") {
+          if (__DEV__) {
+            console.log(
+              "[DEBUG] keyboardDidChangeFrame. Active:",
+              isKeyboardActive.current,
+              "Height:",
+              e.endCoordinates.height,
+              "ScreenY:",
+              e.endCoordinates.screenY
+            );
+          }
+          if (isKeyboardActive.current) {
+            setKeyboardPadding(e.endCoordinates.height);
+          }
         }
       },
     );
@@ -68,6 +99,7 @@ export const AddTransactionModal = ({
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      changeSubscription.remove();
     };
   }, []);
 
@@ -76,7 +108,7 @@ export const AddTransactionModal = ({
     if (isVisible && editingTransaction) {
       // This rounds the math to 2 decimal places and cleans up any extra zeros
       setAmount(parseFloat(editingTransaction.amount.toFixed(2)).toString());
-      setCategory(editingTransaction.category);
+      setCategory(editingTransaction.category === "Food" ? "Eat Out" : editingTransaction.category);
       setNotes(editingTransaction.notes || "");
       setType(editingTransaction.type);
     } else if (isVisible && !editingTransaction) {
@@ -94,6 +126,26 @@ export const AddTransactionModal = ({
   const isFormValid = isAmountValid && (isCategorySelected || hasNote);
 
   const showNoteHint = isAmountValid && !isCategorySelected && !hasNote;
+
+  if (__DEV__) {
+    const calcPadding = Platform.OS === "android"
+      ? keyboardPadding > 0
+        ? keyboardPadding + (showNoteHint ? 16 : 64) + (isNotesFocused ? 50 : 0)
+        : 40
+      : 40;
+    console.log(
+      "[DEBUG] Render - keyboardPadding:",
+      keyboardPadding,
+      "showNoteHint:",
+      showNoteHint,
+      "isNotesFocused:",
+      isNotesFocused,
+      "calcPadding:",
+      calcPadding,
+      "isKeyboardActive:",
+      isKeyboardActive.current
+    );
+  }
 
   const handleSave = () => {
     const parsedAmount = parseFloat(amount);
@@ -153,7 +205,7 @@ export const AddTransactionModal = ({
               paddingBottom:
                 Platform.OS === "android"
                   ? keyboardPadding > 0
-                    ? keyboardPadding + (showNoteHint ? 16 : 64)
+                    ? keyboardPadding + (showNoteHint ? 16 : 64) + (isNotesFocused ? 50 : 0)
                     : 40
                   : 40,
               backgroundColor: colors.cardBackground,
@@ -309,6 +361,8 @@ export const AddTransactionModal = ({
               onChangeText={setNotes}
               placeholderTextColor={colors.textSecondary}
               maxLength={50}
+              onFocus={() => setIsNotesFocused(true)}
+              onBlur={() => setIsNotesFocused(false)}
             />
           </View>
 

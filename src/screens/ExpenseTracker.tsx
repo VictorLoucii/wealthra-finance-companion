@@ -26,14 +26,19 @@ const ExpenseTracker = () => {
   // 1. Filter transactions for the current month ONLY (Aligns with Dashboard/Budget)
   const monthlyTransactions = useMemo(() => {
     const now = new Date();
-    return transactions.filter((t) => {
-      const d = new Date(t.date);
-      return (
-        d.getMonth() === now.getMonth() &&
-        d.getFullYear() === now.getFullYear() &&
-        t.type === "expense"
-      );
-    });
+    return transactions
+      .filter((t) => {
+        const d = new Date(t.date);
+        return (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear() &&
+          t.type === "expense"
+        );
+      })
+      .map((t) => ({
+        ...t,
+        category: t.category === "Food" ? "Eat Out" : t.category,
+      }));
   }, [transactions]);
 
   // 2. Calculate the Total specifically for this month
@@ -55,7 +60,9 @@ const ExpenseTracker = () => {
     return Object.keys(grouped)
       .map((categoryName) => {
         const categoryInfo =
-          CATEGORIES.find((c) => c.name === categoryName) || CATEGORIES[7];
+          CATEGORIES.find((c) => c.name === categoryName) ||
+          CATEGORIES.find((c) => c.name === "General") ||
+          CATEGORIES[CATEGORIES.length - 1];
         return {
           value: grouped[categoryName],
           color: categoryInfo.color,

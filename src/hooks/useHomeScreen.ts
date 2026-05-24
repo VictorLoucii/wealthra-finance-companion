@@ -299,6 +299,7 @@ export const useHomeScreen = (navigation?: any) => {
     selectedBudgetItem,
     setSelectedBudgetItem,
     handleSaveWallet,
+    budgetGoal,
     monthlyExpenses: activeBudgetExpenses, // Map activeBudgetExpenses to monthlyExpenses for MainGrid
     monthlyIncome,
     currentMonthTransactions,

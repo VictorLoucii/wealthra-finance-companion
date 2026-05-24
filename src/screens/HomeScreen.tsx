@@ -56,6 +56,7 @@ const HomeScreen = ({ navigation }: { navigation?: any }) => {
           currentMonthBudget={state.currentMonthBudget}
           currency={state.currency}
           colors={colors}
+          budgetGoal={state.budgetGoal}
         />
 
         {/* Quick Notes Card */}

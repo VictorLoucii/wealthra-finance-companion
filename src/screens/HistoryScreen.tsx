@@ -139,8 +139,9 @@ const HistoryScreen = ({
       const lowerQuery = searchQuery.toLowerCase();
       data = data.filter((t) => {
         // Safe checks: If the property is null/undefined, it just returns 'false' instead of crashing
+        const categoryName = t.category === "Food" ? "Eat Out" : t.category;
         const categoryMatch =
-          t.category?.toLowerCase().includes(lowerQuery) || false;
+          categoryName?.toLowerCase().includes(lowerQuery) || false;
         const notesMatch = t.notes?.toLowerCase().includes(lowerQuery) || false;
         const amountMatch = t.amount?.toString().includes(lowerQuery) || false;
 

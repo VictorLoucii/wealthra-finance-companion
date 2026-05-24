@@ -192,8 +192,9 @@ export const DailySpendingSection = ({
               <View style={[styles.dayDivider, { backgroundColor: colors.divider }]} />
               <View style={styles.dayTransactions}>
                 {dayGroup.items.map((item) => {
+                  const normalizedCategory = item.category === "Food" ? "Eat Out" : item.category;
                   const catData =
-                    CATEGORIES.find((c) => c.name === item.category) ||
+                    CATEGORIES.find((c) => c.name === normalizedCategory) ||
                     CATEGORIES.find((c) => c.name === "General") ||
                     CATEGORIES[CATEGORIES.length - 1];
                   const IconComponent = catData.icon;
@@ -217,10 +218,10 @@ export const DailySpendingSection = ({
                           style={[styles.dayRowCategoryText, { color: colors.textMain }]}
                           numberOfLines={1}
                         >
-                          {item.notes ? item.notes : item.category}
+                          {item.notes ? item.notes : normalizedCategory}
                         </Text>
                         <Text style={[styles.dayRowTimeText, { color: colors.textSecondary }]}>
-                          {item.notes ? `${item.category} • ` : ""}
+                          {item.notes ? `${normalizedCategory} • ` : ""}
                           {formatTime(item.date)}
                         </Text>
                       </View>

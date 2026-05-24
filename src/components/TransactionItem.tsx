@@ -24,8 +24,11 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
   const currency = useFinanceStore((state) => state.currency);
+  const normalizedCategory = item.category === "Food" ? "Eat Out" : item.category;
   const categoryData =
-    CATEGORIES.find((c) => c.name === item.category) || CATEGORIES[7]; // Default to 'General'
+    CATEGORIES.find((c) => c.name === normalizedCategory) || 
+    CATEGORIES.find((c) => c.name === "General") || 
+    CATEGORIES[CATEGORIES.length - 1]; 
   const CategoryIcon = categoryData.icon;
 
   return (
@@ -51,12 +54,12 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
           style={[styles.transCategory, { color: colors.textMain }]}
           numberOfLines={1}
         >
-          {item.notes ? item.notes : item.category}
+          {item.notes ? item.notes : normalizedCategory}
         </Text>
 
         {/* REQ: Keep date, but prepend category if the note took the primary spot */}
         <Text style={[styles.transDate, { color: colors.textSecondary }]}>
-          {item.notes ? `${item.category} • ` : ""}
+          {item.notes ? `${normalizedCategory} • ` : ""}
           {new Date(item.date).toLocaleDateString()}
         </Text>
         <Text style={[styles.transDate, { color: colors.textSecondary, marginTop: 1 }]}>
