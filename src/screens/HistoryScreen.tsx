@@ -14,6 +14,7 @@ import { TransactionItem } from "../components/TransactionItem";
 import { ChevronLeft, Trash2, Search, X } from "lucide-react-native";
 import { AddTransactionModal } from "../components/AddTransactionModal";
 import { COLORS } from "../constants/color";
+import { formatCurrency } from "../utils/formatters";
 
 const getRelativeDateString = (dateStr: string) => {
   const now = new Date();
@@ -75,6 +76,7 @@ const HistoryScreen = ({
     clearAllTransactions,
     deleteTransaction,
     selectedDate,
+    currency,
   } = useFinanceStore();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -152,6 +154,67 @@ const HistoryScreen = ({
     return data;
   }, [transactions, activeFilter, searchQuery]);
 
+  // GroupedDay interface for day grouping
+  interface GroupedDay {
+    dayKey: string;
+    date: string;
+    relativeDate: string;
+    transactions: Transaction[];
+    totalExpenditure: number;
+    totalIncome: number;
+  }
+
+  const groupedData = useMemo(() => {
+    // Sort transactions descending by date
+    const sortedData = [...filteredData].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    const getCalendarDayStr = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const groups: { [key: string]: Transaction[] } = {};
+    sortedData.forEach((t) => {
+      const dayKey = getCalendarDayStr(t.date);
+      if (!groups[dayKey]) {
+        groups[dayKey] = [];
+      }
+      groups[dayKey].push(t);
+    });
+
+    return Object.keys(groups)
+      .sort((a, b) => b.localeCompare(a))
+      .map((dayKey) => {
+        const txs = groups[dayKey];
+        const representativeDate = txs[0].date;
+        const relativeDate = getRelativeDateString(representativeDate);
+
+        let totalExpenditure = 0;
+        let totalIncome = 0;
+        txs.forEach((t) => {
+          if (t.type === "expense") {
+            totalExpenditure += t.amount;
+          } else {
+            totalIncome += t.amount;
+          }
+        });
+
+        return {
+          dayKey,
+          date: representativeDate,
+          relativeDate,
+          transactions: txs,
+          totalExpenditure,
+          totalIncome,
+        };
+      });
+  }, [filteredData]);
+
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
@@ -223,7 +286,7 @@ const HistoryScreen = ({
         ))}
       </View>
 
-      {filteredData.length === 0 ? (
+      {groupedData.length === 0 ? (
         <View style={styles.emptyState}>
           <Text
             style={[styles.emptyStateText, { color: colors.textSecondary }]}
@@ -233,26 +296,61 @@ const HistoryScreen = ({
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-          <FlashList<Transaction>
-            data={filteredData}
-            renderItem={({ item }) => (
-              <View>
-                <Text
-                  style={[
-                    styles.relativeDateText,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {getRelativeDateString(item.date)}
-                </Text>
-                <TransactionItem
-                  item={item}
-                  onPress={() => handleItemPress(item)}
-                />
+          <FlashList<GroupedDay>
+            data={groupedData}
+            renderItem={({ item: group }) => (
+              <View
+                style={[
+                  styles.dayCard,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={[styles.dayHeader, { borderBottomColor: colors.divider }]}>
+                  <Text
+                    style={[
+                      styles.relativeDateText,
+                      { color: colors.textSecondary, marginBottom: 0, marginLeft: 0 },
+                    ]}
+                  >
+                    {group.relativeDate.charAt(0).toUpperCase() + group.relativeDate.slice(1)}
+                  </Text>
+                  <View style={styles.dayTotalsContainer}>
+                    {activeFilter !== "expense" && group.totalIncome > 0 && (
+                      <Text style={[styles.dayTotalText, { color: "#4CAF50" }]}>
+                        +{formatCurrency(group.totalIncome, currency)}
+                      </Text>
+                    )}
+                    {activeFilter !== "income" && group.totalExpenditure > 0 && (
+                      <Text style={[styles.dayTotalText, { color: "#F44336" }]}>
+                        {formatCurrency(-group.totalExpenditure, currency)}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {group.transactions.map((tx, idx) => (
+                  <View key={tx.id}>
+                    {idx > 0 && (
+                      <View
+                        style={[
+                          styles.dayDivider,
+                          { backgroundColor: colors.divider },
+                        ]}
+                      />
+                    )}
+                    <TransactionItem
+                      item={tx}
+                      isFlat={true}
+                      onPress={() => handleItemPress(tx)}
+                    />
+                  </View>
+                ))}
               </View>
             )}
             contentContainerStyle={styles.listContent}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(group) => group.dayKey}
           />
         </View>
       )}
@@ -327,6 +425,33 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 6,
     marginLeft: 4,
+  },
+  dayCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 16,
+  },
+  dayHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+  },
+  dayTotalsContainer: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  dayTotalText: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  dayDivider: {
+    height: 1,
+    marginVertical: 4,
   },
 });
 

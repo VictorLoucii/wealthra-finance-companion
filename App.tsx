@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { Alert } from "react-native";
+import * as Updates from "expo-updates";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -27,6 +30,41 @@ export default function App() {
       notification: colors.accent,
     },
   };
+
+  useEffect(() => {
+    async function onFetchUpdateAsync() {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          Alert.alert(
+            "Update Available",
+            "Victor pushed a new feature! Would you like to download it now?",
+            [
+              { text: "Later", style: "cancel" },
+              {
+                text: "Download",
+                onPress: async () => {
+                  try {
+                    await Updates.fetchUpdateAsync();
+                    await Updates.reloadAsync();
+                  } catch (error) {
+                    Alert.alert("Error", "Failed to apply the update.");
+                  }
+                },
+              },
+            ]
+          );
+        }
+      } catch (error) {
+        // Silently fail if offline or dev mode
+        console.log("Error checking for updates:", error);
+      }
+    }
+
+    if (!__DEV__) {
+      onFetchUpdateAsync();
+    }
+  }, []);
 
   return (
     <SafeAreaProvider>

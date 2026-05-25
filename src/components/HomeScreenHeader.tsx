@@ -32,7 +32,7 @@ export const HomeScreenHeader = ({
     <View style={styles.header}>
       <View style={styles.headerLeftGroup}>
         <Text style={[styles.headerTitle, { color: colors.textMain }]}>
-          {selectedDate.toLocaleDateString("en-US", { month: "long" })}
+          {selectedDate.toLocaleDateString("en-US", { month: "long" })} ✨
         </Text>
         <TouchableOpacity
           activeOpacity={0.7}

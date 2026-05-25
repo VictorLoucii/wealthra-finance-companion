@@ -9,6 +9,7 @@ interface TransactionItemProps {
   item: Transaction;
   //   onLongPress?: (id: string) => void;
   onPress?: (id: string) => void;
+  isFlat?: boolean;
 }
 
 const formatTime = (dateStr: string) => {
@@ -20,7 +21,7 @@ const formatTime = (dateStr: string) => {
   });
 };
 
-export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
+export const TransactionItem = ({ item, onPress, isFlat }: TransactionItemProps) => {
   const theme = useFinanceStore((state) => state.theme) || "light";
   const colors = COLORS[theme];
   const currency = useFinanceStore((state) => state.currency);
@@ -38,6 +39,15 @@ export const TransactionItem = ({ item, onPress }: TransactionItemProps) => {
       style={[
         styles.transactionItem,
         { backgroundColor: colors.cardBackground },
+        isFlat && {
+          backgroundColor: "transparent",
+          borderRadius: 0,
+          marginBottom: 0,
+          paddingHorizontal: 8,
+          paddingVertical: 12,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
       ]}
     >
       <View

@@ -153,7 +153,7 @@ export const DailySpendingSection = ({
           </Text>
           <TouchableOpacity onPress={() => navigation?.navigate("BudgetPlanning")}>
             <Text style={{ color: colors.accent, fontWeight: "700", marginTop: 6, fontSize: 13 }}>
-              Set Month Budget to view daily allowance.
+              Please set a Budget to view daily allowance.
             </Text>
           </TouchableOpacity>
         </View>

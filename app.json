@@ -14,11 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.victor.zorwyn" 
+      "bundleIdentifier": "com.victor.zorwyn"
     },
     "android": {
-      "package": "com.victor.zorwyn", 
-      "softwareKeyboardLayoutMode": "pan", 
+      "package": "com.victor.zorwyn",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/appIcon.png",
         "backgroundColor": "#ffffff"
@@ -31,6 +31,19 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "988a9a21-c716-4781-8026-80e9ea46890a"
+      }
+    },
+    "owner": "kwickslow30",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/988a9a21-c716-4781-8026-80e9ea46890a"
+    }
   }
 }

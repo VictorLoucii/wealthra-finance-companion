@@ -1,12 +1,16 @@
 import { 
   Utensils, Home, Car, Briefcase, Gamepad2, ShoppingBag, HeartPulse, Layers,
-  Banknote, Laptop, Gift, ShoppingBasket, Carrot, Apple, Coins, Handshake 
+  Banknote, Laptop, Gift, ShoppingBasket, Carrot, Apple, Coins, Handshake,
+  Drumstick, Ham, Smartphone
 } from 'lucide-react-native';
 
 export const CATEGORIES = [
   { id: '12', name: 'Groceries', icon: ShoppingBasket, color: '#FFCC00', type: 'expense' },
   { id: '13', name: 'Vegetables', icon: Carrot, color: '#4CD964', type: 'expense' },
   { id: '14', name: 'Fruits', icon: Apple, color: '#FF5A5F', type: 'expense' },
+  { id: '17', name: 'Chicken', icon: Drumstick, color: '#D35400', type: 'expense' },
+  { id: '18', name: 'Pork', icon: Ham, color: '#F06292', type: 'expense' },
+  { id: '19', name: 'Mobile Recharge', icon: Smartphone, color: '#00B0FF', type: 'expense' },
   { id: '1', name: 'Eat Out', icon: Utensils, color: '#FF9500', type: 'expense' },
   { id: '2', name: 'Rent', icon: Home, color: '#5856D6', type: 'expense' },
   { id: '3', name: 'Transport', icon: Car, color: '#007AFF', type: 'expense' },
