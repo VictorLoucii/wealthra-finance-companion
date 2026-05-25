@@ -42,7 +42,8 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
   * **Command Center Dashboard**: An informative overview featuring **Global Balance** (editable cash-on-hand), **Monthly Income**, and **Monthly Expenses**.
   * **Editable Profile Customization**: Users can edit their username directly from the Home Screen, which automatically updates initials dynamically on the avatar badge across the application.
   * **Pre-filtered History Views & Slice Limits**: Slices Daily Spending to a maximum of 3 items, with a "View All" link redirecting to the History screen pre-filtered for expenses.
-  * **Relative Date Headers**: Bold, lowercase relative dates (e.g. `today`, `1 day ago`, `2 days ago` ... `1 week ago`, etc.) displayed on the History Screen.
+  * **Day-Grouped History Cards & Daily Totals**: Groups transactions by calendar day inside unified card boxes. Displays relative dates (e.g. `today`, `1 day ago`, etc.) left-aligned and daily total expenditures/incomes right-aligned (colored red and green). Totals dynamically update based on the selected filter.
+  * **EAS Over-The-Air (OTA) Updates**: Configured EAS Update startup checks. Users are automatically prompted with a native dialog to instantly download and reload new Javascript/UI changes.
   * **Dynamic Light/Dark Mode**: A system-wide, professional theme toggle built with centralized semantic color mapping.
   * **Currency Value Engine**: Full support for **Indian Rupees (₹)** and **US Dollars ($)**. Unlike basic trackers, Wealthra performs real-time mathematical conversion of all historical transactions, budget limits, and initial balances when toggling currencies.
   * **Localization Polish**: Uses `Intl.NumberFormat` with the `en-IN` locale to ensure correct Indian numbering system comma placement (e.g., 1,00,000) for INR users.
@@ -109,3 +110,35 @@ npx expo start
 
 -----
 
+### 📲 EAS OTA Updates & Configuration
+
+We have integrated **EAS (Expo Application Services) Updates** to enable Over-The-Air (OTA) updates. This allows JavaScript and UI changes (like adding categories, changing copy, or updating layouts) to be sent directly to user devices without needing to build and distribute new `.apk` files.
+
+#### ⚠️ Critical Troubleshooting Note for OTA Updates
+If you find that an `.apk` downloaded from Expo **does not detect or apply OTA updates**, verify the following:
+
+1. **The `channel` must be defined in `eas.json`**:
+   During cloud builds, Expo embeds the channel name into the native binary. If the `channel` property is missing from the build profile in `eas.json` (e.g. `preview` or `production`), the native app has no channel config and will **capsulate and ignore** update checks.
+   
+   Ensure your `eas.json` profiles are mapped to a channel:
+   ```json
+   "build": {
+     "preview": {
+       "distribution": "internal",
+       "channel": "preview"
+     },
+     "production": {
+       "autoIncrement": true,
+       "channel": "production"
+     }
+   }
+   ```
+
+2. **Publish updates to the correct branch**:
+   Ensure you publish updates matching the channel name configured in your build profile:
+   ```bash
+   eas update --branch preview --message "Your update description"
+   ```
+
+3. **Native changes require a new build**:
+   OTA updates only apply to JavaScript code, styling, and static assets. If you add new native libraries, update permissions, or change configuration keys in `app.json`, you **must** build a new APK via `eas build`.
