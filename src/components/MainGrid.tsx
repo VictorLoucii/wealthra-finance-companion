@@ -14,6 +14,7 @@ interface MainGridProps {
   currency: "USD" | "INR";
   colors: any;
   budgetGoal?: BudgetGoal | null;
+  budgetDurationText?: string;
 }
 
 export const MainGrid = ({
@@ -26,6 +27,7 @@ export const MainGrid = ({
   currency,
   colors,
   budgetGoal,
+  budgetDurationText,
 }: MainGridProps) => {
   const gridItems = [
     { name: "Budget", icon: PieChart },
@@ -112,9 +114,10 @@ export const MainGrid = ({
                   isActive && styles.gridValueActive,
                 ]}
               >
-                {budgetGoal.durationType === "full_month"
-                  ? "For 1 month"
-                  : `For ${budgetGoal.customDays || 7} days`}
+                {budgetDurationText ||
+                  (budgetGoal.durationType === "full_month"
+                    ? "For 1 month"
+                    : `For ${budgetGoal.customDays || 7} days`)}
               </Text>
             )}
 

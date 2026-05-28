@@ -179,6 +179,50 @@ export const useHomeScreen = (navigation?: any) => {
     return { start, end };
   }, [budgetGoal, selectedDate]);
 
+  const budgetDurationText = useMemo(() => {
+    if (!budgetGoal || !budgetActiveWindow) return "";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { start, end } = budgetActiveWindow;
+
+    const startZero = new Date(start);
+    startZero.setHours(0, 0, 0, 0);
+
+    const endZero = new Date(end);
+    endZero.setHours(0, 0, 0, 0);
+
+    const totalDays = Math.round((endZero.getTime() - startZero.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    const todayMonthKey = `${today.getFullYear()}-${today.getMonth()}`;
+    const isCurrentMonthBudget = monthKey === todayMonthKey;
+
+    if (!isCurrentMonthBudget) {
+      if (today > endZero) {
+        return budgetGoal.durationType === "full_month"
+          ? "For 1 month (Ended)"
+          : `Day ${totalDays} of ${totalDays} (Ended)`;
+      } else {
+        return budgetGoal.durationType === "full_month"
+          ? "For 1 month"
+          : `For ${budgetGoal.customDays || 7} days`;
+      }
+    }
+
+    if (today < startZero) {
+      const daysToStart = Math.round((startZero.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return `Starts in ${daysToStart} day${daysToStart === 1 ? "" : "s"}`;
+    } else if (today > endZero) {
+      return budgetGoal.durationType === "full_month"
+        ? "For 1 month (Ended)"
+        : `Day ${totalDays} of ${totalDays} (Ended)`;
+    } else {
+      const currentDay = Math.round((today.getTime() - startZero.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      return `Day ${currentDay} of ${totalDays}`;
+    }
+  }, [budgetGoal, budgetActiveWindow, monthKey]);
+
   const activeBudgetExpenses = useMemo(() => {
     const monthlyExpensesTotal = transactions
       .filter((t) => {
@@ -310,5 +354,6 @@ export const useHomeScreen = (navigation?: any) => {
     todaySpentPercentage,
     handleCloseModal,
     handleTransactionItemAction,
+    budgetDurationText,
   };
 };
