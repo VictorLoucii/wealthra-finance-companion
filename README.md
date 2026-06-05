@@ -52,6 +52,8 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
   * **Goal Feature: Custom Duration Budgeting**: Supports setting budgets either for a **Full Month** or a **Custom Duration (e.g., 7 Days, 14 Days, etc.)** with a "Traffic Light" progress system (**Green** $\to$ **Orange** $\to$ **Red**).
   * **Daily Target Budget & Spent Progress**: Displays the daily target budget allowance (`limit / durationDays`) and tracks today's spent progress/percentage in the Daily Spending section.
   * **Quick Notes Section**: A premium, interactive dashboard memo card for jotting down reminders, shopping list items, or general thoughts. Supports easy updates and a dedicated "Clear Note" feature via a custom multiline modal.
+  * **Offline CSV Export & Daily Budget Breakdown**: Generates RFC-4180 compliant CSV reports offline. Features a detailed metadata header (month, limit, duration, daily target allowance), a day-by-day budget consumption table (tracking income, spent, net flow, and budget status for all days in the active budget window), and the raw transactions table.
+  * **Dual-Method Share & Local Save**: Supports either sharing the CSV file via native share sheet (`expo-sharing`) or saving it directly to local device storage (utilizing Android's Storage Access Framework directory picker, which bypasses the need for storage write permissions).
 
 -----
 
@@ -59,11 +61,12 @@ Wealthra is a mobile-first finance tracker designed to turn abstract spending in
 
   * **Framework**: React Native (Expo SDK 54) + **TypeScript**.
   * **State Management**: **Zustand** with **AsyncStorage** persistence.
-  * **Architecture Layout (Modularity & Hooks)**: Extracted all screen files to keep them under 150 lines. Business logic and state calculations are delegated to custom hooks (`useHomeScreen`, `useBudgetPlanning`), and UI rendering is divided into presentational sub-components.
+  * **Architecture Layout (Modularity & Hooks)**: Extracted all screen files to keep them under 150 lines (History Screen refactored to 265 lines, well below the 450-line rule limit). Business logic, grouping, and search calculations are delegated to custom hooks (`useHomeScreen`, `useBudgetPlanning`, `useHistoryScreen`), keeping presentation views clean and presentational.
   * **Rolling Budget Window Engine**: Tracks transaction dates against custom duration active windows (`[startDate, startDate + customDays]`) to compute spent progress on custom-days budgets.
   * **State Mapping**: Implemented a custom `setCurrency` action in the store that maps through the `transactions` array and `monthlyBudgets` record to maintain data integrity during currency shifts (supporting structured budget goals).
   * **Data Handling**: Utilizes a `monthKey` mapping strategy (`YYYY-MM`) to isolate budgets and transactions.
   * **Offline Note Engine**: Integrated the note state into the persistent Zustand/AsyncStorage pipeline to ensure user memos are safely saved offline.
+  * **Android Storage Access Framework (SAF) Integration**: Implemented native Android SAF folder picker API to save files directly to user-selected folders (like Downloads) offline without requiring runtime storage write permissions.
 
 -----
 
