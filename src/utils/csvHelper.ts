@@ -79,7 +79,14 @@ export const convertTransactionsToCSV = (
   const headers = ["ID", "Date", "Type", "Category", "Amount", "Notes"];
   csvLines.push(headers.map(escapeCSVValue).join(","));
 
-  const rows = transactions.map((t) => {
+  // Sort transactions by date descending (newest first) to group consistently
+  const sortedTransactions = [...transactions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  let currentGroupDate = "";
+
+  sortedTransactions.forEach((t) => {
     const dateFormatted = new Date(t.date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "2-digit",
@@ -89,10 +96,21 @@ export const convertTransactionsToCSV = (
       second: "2-digit",
     });
 
+    const txDateStr = dateFormatted.split(",")[0];
+
+    // If the date changes, insert a date separator row
+    if (txDateStr !== currentGroupDate) {
+      if (currentGroupDate !== "") {
+        csvLines.push(""); // Add an empty row separator between different date groups
+      }
+      currentGroupDate = txDateStr;
+      csvLines.push(`${escapeCSVValue(`=== ${txDateStr} ===`)},,,,,`);
+    }
+
     const currencySymbol = currencyCode === "INR" ? "INR" : "USD";
     const amountVal = t.type === "expense" ? -t.amount : t.amount;
 
-    return [
+    const row = [
       t.id,
       dateFormatted,
       t.type,
@@ -100,9 +118,7 @@ export const convertTransactionsToCSV = (
       `${amountVal} ${currencySymbol}`,
       t.notes || "",
     ];
-  });
 
-  rows.forEach((row) => {
     csvLines.push(row.map(escapeCSVValue).join(","));
   });
 
